@@ -1,6 +1,8 @@
 import string
-from models import Square, Board
-import typing
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from models import Square
 
 def generate_columns_rows():
     columns = list(string.ascii_lowercase[:8])
@@ -36,14 +38,14 @@ def label_to_indices(label):
     row = int(label[1]) - 1
     return col, row
 
-def is_at_knight_distance(square1: Square, square2: Square):
+def is_at_knight_distance(square1: 'Square', square2: 'Square') -> bool:
     columns, rows = generate_columns_rows()
     column_distance = abs(columns.index(square2.column) - columns.index(square1.column))
     row_distance = abs(rows.index(square2.row) - rows.index(square1.row))
     boolean = column_distance + row_distance == 3 and square1.column != square2.column and square1.row != square2.row
     return boolean
 
-def squares_at_knight_distance(square : Square):
+def squares_at_knight_distance(square: 'Square'):
     board = square.board
     return [board[col + row] for col in board.columns for row in board.rows if is_at_knight_distance(board[col + row], square)]
 

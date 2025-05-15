@@ -3,9 +3,12 @@ import string
 from typing import List
 
 class Board:
-    def __init__(self):
+    def __init__(self, with_squares = True, initial_position = True):
         self.columns, self.rows = utils.generate_columns_rows()
-        self._create_squares()
+        if with_squares :
+            self._create_squares()
+            if initial_position :
+                self._initial_position()
 
     def _create_squares(self):
         self.grid = [[Square(column+row,self) for row in self.rows] for column in self.columns]
@@ -61,7 +64,7 @@ class Board:
 class Square:
     def __init__(self, string_square : str, board : Board):
         if not utils.is_valid_string_square(string_square):
-            raise ValueError("Wrong argument in the Square constructor : ", string_square)
+            raise ValueError(f"Wrong argument in the Square constructor : {string_square}")
         self.column = string_square[0]
         self.row = string_square[1]
         self.name = self.column + self.row
@@ -170,20 +173,6 @@ class King(Piece):
 
 
 if __name__ == "__main__":
-    # string_squares = ["a1",
-    #                   "h8",
-    #                   "randomstring",
-    #                   "a0",
-    #                   "a9",
-    #                   "i2"]
-    # for string_square in string_squares:
-    #     try:
-    #         new_square = Square(string_square)
-    #     except ValueError as e:
-    #         print(e)
-    #     else:
-    #         print("Square successfully created : ", string_square)
-
     ##Pawn
     # chessboard = Board()
     # Pawn("white").place_on_square(chessboard["a2"])
@@ -197,7 +186,7 @@ if __name__ == "__main__":
     #     print(case.name, case.occupying_piece.display, case.occupying_piece.accessible_squares())
 
     ## Knight
-    chessboard = Board()
+    chessboard = Board(initial_position=False)
     Knight("white").place_on_square(chessboard["a1"])
     print(chessboard)
     cases = chessboard.occupied_squares

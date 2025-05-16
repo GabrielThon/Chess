@@ -65,7 +65,7 @@ class Board:
 
 
 class Square:
-    def __init__(self, string_square: str, board: Board):
+    def __init__(self, string_square: str, board: Board = None):
         if not utils.is_valid_string_square(string_square):
             raise ValueError(f"Wrong argument in the Square constructor : {string_square}")
         self.column = string_square[0]

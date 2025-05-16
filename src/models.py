@@ -1,6 +1,6 @@
 import utils
-import string
 from typing import List
+from abc import ABC, abstractmethod
 
 
 class Board:
@@ -12,8 +12,14 @@ class Board:
             if initial_position:
                 self._initial_position()
 
-    def _create_squares(self):
-        self.grid = [[Square(column + row, self) for row in self.rows] for column in self.columns]
+    def __str__(self):
+        board_string = " ——" * 8 + "\n"
+        for row in reversed(self.rows):
+            board_string += "|"
+            for column in self.columns:
+                board_string += str(self[column + row]) + "|"
+            board_string += "\n" + " ——" * 8 + "\n"
+        return board_string
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -27,37 +33,18 @@ class Board:
         else:
             return None
 
+    def _create_squares(self):
+        self.grid = [[Square(column + row, self) for row in self.rows] for column in self.columns]
+
     def _initial_position(self):
-        Rook("white").place_on_square(self["a1"])
-        Rook("white").place_on_square(self["h1"])
-        Knight("white").place_on_square(self["b1"])
-        Knight("white").place_on_square(self["g1"])
-        Bishop("white").place_on_square(self["c1"])
-        Bishop("white").place_on_square(self["f1"])
-        Queen("white").place_on_square(self["d1"])
-        King("white").place_on_square(self["e1"])
+        for [color, piece, square] in utils.starting_position():
+            self.place(color, piece, square)
 
-        Rook("black").place_on_square(self["a8"])
-        Rook("black").place_on_square(self["h8"])
-        Knight("black").place_on_square(self["b8"])
-        Knight("black").place_on_square(self["g8"])
-        Bishop("black").place_on_square(self["c8"])
-        Bishop("black").place_on_square(self["f8"])
-        Queen("black").place_on_square(self["d8"])
-        King("black").place_on_square(self["e8"])
+    def place(self, color_string, piece_string, square_string):
+        return self[square_string].place(color_string, piece_string)
 
-        for column in range(8):
-            Pawn("white").place_on_square(self[[column, 1]])
-            Pawn("black").place_on_square(self[[column, 6]])
-
-    def __str__(self):
-        board_string = " ——" * 8 + "\n"
-        for row in reversed(self.rows):
-            board_string += "|"
-            for column in self.columns:
-                board_string += self[column + row].display + "|"
-            board_string += "\n" + " ——" * 8 + "\n"
-        return board_string
+    def remove_piece(self, square_string):
+        return self[square_string].remove_piece()
 
     @property
     def occupied_squares(self):
@@ -66,7 +53,7 @@ class Board:
 
 class Square:
     def __init__(self, string_square: str, board: Board = None):
-        if not utils.is_valid_string_square(string_square):
+        if not utils.is_valid_square_string(string_square):
             raise ValueError(f"Wrong argument in the Square constructor : {string_square}")
         self.column = string_square[0]
         self.row = string_square[1]
@@ -74,57 +61,78 @@ class Square:
         self.board = board
         self.occupying_piece = None
 
-    @property
-    def isempty(self):
-        return self.occupying_piece is None
-
-    @property
-    def display(self):
+    def __str__(self):
         if self.isempty:
             return "  "
         else:
-            return self.occupying_piece.display
+            return str(self.occupying_piece)
 
     def __repr__(self):
         return f"{self.column}{self.row}"
 
+    @property
+    def isempty(self):
+        return self.occupying_piece is None
 
-class Piece:
-    def __init__(self, color: str):
-        self.current_square = None
+    def place(self, color_string, piece_string):
+        piece_string_to_cls = {
+            "Pawn": Pawn,
+            "Knight": Knight,
+            "Bishop": Bishop,
+            "Rook": Rook,
+            "Queen": Queen,
+            "King": King
+        }
+        piece_cls = piece_string_to_cls.get(piece_string)
+        if piece_cls is None:
+            return False
+
+        piece_cls(color_string).place_on_square(self)
+        return True
+
+    def remove_piece(self):
+        if self.occupying_piece:
+            self.occupying_piece = None
+            return True
+        return False
+
+
+class Piece(ABC):
+    def __init__(self, color: str, type: str):
         if not utils.is_valid_color(color):
             raise ValueError("Wrong color specified for the piece : ", color)
         self.color = color.lower()
         self.opposite_color = "black" if self.color == "white" else "white"
-        self.type = "Undefined"
+        self.type = type
+        self.current_square = None
 
-    @property
-    def display(self):
+    def __repr__(self):
+        return f"{self.type[0]}{self.current_square}-{self.color[0]}"
+
+    def __str__(self):
         return self.type[0] + self.color[0]
 
     def place_on_square(self, square: Square):
         self.current_square = square
         square.occupying_piece = self
-        if self.color == "white":
-            square.board.white_pieces.append(self)
-        else:
-            square.board.black_pieces.append(self)
+        if square.board:
+            if self.color == "white":
+                square.board.white_pieces.append(self)
+            else:
+                square.board.black_pieces.append(self)
 
+    @abstractmethod
     def defended_squares(self) -> List[Square]:
         pass
 
-    def moving_squares(self) -> List[Square]: #Applies to all pieces except Pawn and King where it is overloaded
+    def moving_squares(self) -> List[Square]:  # Applies to all pieces except Pawn and King where it is overloaded
         return [square for square in self.defended_squares() if
                 (square.isempty or square.occupying_piece.color == self.opposite_color)]
-
-    def __repr__(self):
-        return f"{self.type[0]}{self.current_square}-{self.color}"
 
 
 class Pawn(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "Pawn"
+        super().__init__(color.lower(), "Pawn")
         self.moving_direction = 1 if self.color == "white" else -1
         self.starting_row = 1 if self.color == "white" else 6
         # self.en_passant_row = 4 if self.color == "white" else 3
@@ -165,8 +173,7 @@ class Pawn(Piece):
 
 class Knight(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "Knight"
+        super().__init__(color.lower(), "Knight")
 
     def defended_squares(self) -> List[Square]:
         defended_squares = []
@@ -186,11 +193,12 @@ class Knight(Piece):
             square_to_examine = board[[examined_column, examined_row]]
             if square_to_examine:
                 defended_squares.append(square_to_examine)
+        return defended_squares
+
 
 class Bishop(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "Bishop"
+        super().__init__(color.lower(), "Bishop")
 
     def defended_squares(self) -> List[Square]:
         board = self.current_square.board
@@ -213,10 +221,10 @@ class Bishop(Piece):
                     break
         return defended_squares
 
+
 class Rook(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "Rook"
+        super().__init__(color.lower(), "Rook")
 
     def defended_squares(self) -> List[Square]:
         board = self.current_square.board
@@ -242,8 +250,7 @@ class Rook(Piece):
 
 class Queen(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "Queen"
+        super().__init__(color.lower(), "Queen")
 
     def defended_squares(self) -> List[Square]:
         board = self.current_square.board
@@ -273,8 +280,7 @@ class Queen(Piece):
 
 class King(Piece):
     def __init__(self, color: str):
-        super().__init__(color.lower())
-        self.type = "King"
+        super().__init__(color.lower(), "King")
 
     def defended_squares(self) -> List[Square]:
         defended_squares = []
@@ -309,46 +315,7 @@ class King(Piece):
                     moving_squares.append(square_to_examine)
         return moving_squares
 
+
 if __name__ == "__main__":
-    ##Pawn
-    # chessboard = Board()
-    # Pawn("white").place_on_square(chessboard["a2"])
-    # Pawn("white").place_on_square(chessboard["b2"])
-    # Pawn("black").place_on_square(chessboard["b3"])
-    # Pawn("black").place_on_square(chessboard["c3"])
-    # Pawn("black").place_on_square(chessboard["h3"])
-    # print(chessboard)
-    # cases = chessboard.occupied_squares
-    # for case in cases :
-    #     print(case.name, case.occupying_piece.display, case.occupying_piece.moving_squares())
-
-    ## Knight
-    # chessboard = Board(initial_position=False)
-    # Knight("white").place_on_square(chessboard["a1"])
-    # print(chessboard)
-    # cases = chessboard.occupied_squares
-    # for case in cases :
-    #     print(case.name, case.occupying_piece.display, case.occupying_piece.moving_squares())
-
-    ## Bishop
-    # chessboard = Board(initial_position=False)
-    # Bishop("white").place_on_square(chessboard["d5"])
-    # Pawn("white").place_on_square(chessboard["b3"])
-    # Pawn("black").place_on_square(chessboard["f7"])
-    # print(chessboard)
-    # cases = chessboard.occupied_squares
-    # for case in cases:
-    #     print(case.name, case.occupying_piece.display, case.occupying_piece.moving_squares())
-
-    ## King 1
-
-    chessboard = Board(initial_position=False)
-    King("white").place_on_square(chessboard["e5"])
-    Pawn("white").place_on_square(chessboard["d6"])
-    Pawn("black").place_on_square(chessboard["e6"])
-    # Knight("black").place_on_square(chessboard["f8"])
-    King("black").place_on_square(chessboard["d7"])
+    chessboard = Board()
     print(chessboard)
-    cases = chessboard.occupied_squares
-    for case in cases:
-        print(case.name, case.occupying_piece.display, case.occupying_piece.moving_squares())

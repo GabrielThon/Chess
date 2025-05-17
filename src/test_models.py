@@ -39,21 +39,12 @@ def test_square_board_linkage():
     square2 = Square("a1", board)
     assert square2.board == board
 
-
-def test_square_isempty():
-    square = Square("a1")
-    assert square.isempty == True
-
-    piece = Pawn("white")
-    piece.place_on_square(square)
-    assert square.isempty == False
-
 def test_board_place(emptyboard):
-    assert emptyboard["a2"].isempty
+    assert not emptyboard.square("a2").piece
     emptyboard.place("white","Pawn","a2")
-    assert str(emptyboard.white_pieces[0]) == "Pa2-w"
+    assert emptyboard.white_pieces[0] == ["Pw","a2"]
 
 def test_board_remove(fullboard):
-    assert not fullboard["a2"].isempty
+    assert fullboard.square("a2").piece
     fullboard.remove_piece("a2")
-    assert fullboard["a2"].isempty
+    assert not fullboard.square("a2").piece

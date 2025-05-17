@@ -1,4 +1,3 @@
-import string
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -41,7 +40,7 @@ def starting_position():
 
 
 def generate_columns_rows():
-    columns = list(string.ascii_lowercase[:8])
+    columns = [chr(i) for i in range(ord('a'), ord('h') + 1)]
     rows = [str(i) for i in range(1, 9)]
     return columns, rows
 
@@ -72,11 +71,12 @@ def is_valid_color(color: str):
 
 def label_to_indices(label):
     # TO DO : checks on label
-    columns = list(string.ascii_lowercase[:8])
-    col = columns.index(label[0])
+    col = ord(label[0]) - ord('a')
     row = int(label[1]) - 1
     return col, row
 
+def next_square_in_direction(square: "Square", direction: tuple[int, int]) -> "Square":
+    return square.board.square([square.column + direction[0], square.row + direction[1]])
 
 if __name__ == "__main__":
     print(is_valid_square_string("a1"))

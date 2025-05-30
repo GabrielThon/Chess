@@ -1,10 +1,38 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.models.pieces import Pawn
+
 class OutofBoundSquareError(Exception):
     """Exception raised when a square is not within the board"""
+
     def __init__(self, key):
         super().__init__(f"Square '{key}' is out of bounds.")
         self.key = key
 
-class InvalidNumberOfKingsError(Exception):
+
+class InvalidPositionError(Exception):
+    """Base class for invalid position errors"""
+    pass
+
+
+class InvalidNumberOfKingsError(InvalidPositionError):
     """Raised when the position doesn't contain 1 king of each color"""
+
     def __init__(self, nb_kings: dict[str, int]):
-        super().__init__(f"Invalid board: must have exactly one white king and one black king., but found {nb_kings["white"]} white king(s) and {nb_kings["black"]} black king(s)")
+        super().__init__(
+            f"Invalid position: must have exactly one white king and one black king., but found {nb_kings["white"]} white king(s) and {nb_kings["black"]} black king(s)")
+
+
+class NonPlayingPlayerKingInCheckError(InvalidPositionError):
+    """Raised when the position doesn't contain 1 king of each color"""
+
+    def __init__(self, color: str):
+        super().__init__(f"Invalid position: {color}'s king is in check but it is not their turn to move.")
+
+
+class PawnOnFirstOrEighthRowError(InvalidPositionError):
+    """Raised on first encounter of a pawn on first or eighth row"""
+
+    def __init__(self, pawn: Pawn):
+        super().__init__(f"Invalid position : Pawn on {pawn.current_square.name} cannot be there")

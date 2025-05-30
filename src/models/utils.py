@@ -1,10 +1,5 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from src.models.board import Square
-
 def starting_position():
-    return [["white","Rook","a1"],
+    return [["white", "Rook", "a1"],
             ["white", "Knight", "b1"],
             ["white", "Bishop", "c1"],
             ["white", "Queen", "d1"],
@@ -45,9 +40,9 @@ def generate_columns_rows():
 
 def is_valid_square_string(string: str) -> bool:
     return (
-        len(string) == 2 and
-        string[0] in 'abcdefgh' and
-        string[1] in '12345678'
+            len(string) == 2 and
+            string[0] in 'abcdefgh' and
+            string[1] in '12345678'
     )
 
 
@@ -63,14 +58,3 @@ def label_to_indices(label):
     col = ord(label[0]) - ord('a')
     row = int(label[1]) - 1
     return col, row
-
-def next_square_in_direction(square: "Square", direction: tuple[int, int]) -> "Square":
-    return square.board.square([square.column + direction[0], square.row + direction[1]])
-
-if __name__ == "__main__":
-    print(is_valid_square_string("a1"))
-    print(is_valid_square_string("h8"))
-    print(is_valid_square_string("randomstring"))
-    print(is_valid_square_string("a0"))
-    print(is_valid_square_string("a9"))
-    print(is_valid_square_string("i2"))

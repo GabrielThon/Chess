@@ -36,39 +36,40 @@ class Piece(ABC):
             if not square.piece or square.piece.color == self.opposite_color
         }
 
+    @abstractmethod
+    def moving_directions(self) -> list:
+        pass
+
 
 class Pawn(Piece):
     def __init__(self, color: str):
         super().__init__(color.lower(), "Pawn")
-        self.moving_direction = 1 if self.color == "white" else -1
         self.starting_row = 1 if self.color == "white" else 6
         # self.en_passant_row = 4 if self.color == "white" else 3
         # self.moved_two_squares_forward = False
 
     def defended_squares(self) -> set[Square]:
-        column, row = utils.label_to_indices(self.current_square.name)
-        board = self.current_square.board
         defended_squares = set()
-        square = board.square([column - 1, row + self.moving_direction])
-        if square:
-            defended_squares.add(square)
-        square = board.square([column + 1, row + self.moving_direction])
-        if square:
-            defended_squares.add(square)
+        directions = self.capturing_directions()
+
+        for direction in directions:
+            square = self.current_square.next_square_in_direction(direction)
+            if square:
+                defended_squares.add(square)
         return defended_squares
 
     def moving_squares(self) -> set[Square]:
         # TO DO : prise en passant. Required : move and last_piece to move
         column, row = utils.label_to_indices(self.current_square.name)
-        board = self.current_square.board
         moving_squares = set()
+        directions = self.moving_directions()
 
         # Checking moving forward
-        square = board.square([column, row + self.moving_direction])
+        square = self.current_square.next_square_in_direction(directions[0])
         if square and not square.piece:
             moving_squares.add(square)
             if row == self.starting_row:  # If the pawn is on its starting square, check if it can moves two moving_squares ahead
-                square = board.square([column, row + 2 * self.moving_direction])
+                square = square.next_square_in_direction(directions[0])
                 if square and not square.piece:
                     moving_squares.add(square)
         # Checking captures
@@ -77,6 +78,14 @@ class Pawn(Piece):
                 moving_squares.add(square)
         return moving_squares
 
+    def moving_directions(self) -> list[tuple[int,int]]:
+        moving_direction = 1 if self.color == "white" else -1
+        return [(0, moving_direction)]
+
+    def capturing_directions(self) -> list[tuple[int,int]]:
+        moving_direction = 1 if self.color == "white" else -1
+        return [(1, moving_direction),
+                (-1, moving_direction)]
 
 class Knight(Piece):
     def __init__(self, color: str):
@@ -84,23 +93,23 @@ class Knight(Piece):
 
     def defended_squares(self) -> set[Square]:
         defended_squares = set()
-        board = self.current_square.board
-        directions = [[1, 2],
-                      [2, 1],
-                      [2, -1],
-                      [1, -2],
-                      [-1, -2],
-                      [-2, -1],
-                      [-2, 1],
-                      [-1, 2],
-                      ]
+        directions = self.moving_directions()
         for direction in directions:
-            current_column, current_row = utils.label_to_indices(self.current_square.name)
-            examined_column, examined_row = current_column + direction[0], current_row + direction[1]
-            square_to_examine = board.square([examined_column, examined_row])
-            if square_to_examine:
-                defended_squares.add(square_to_examine)
+            square = self.current_square.next_square_in_direction(direction)
+            if square:
+                defended_squares.add(square)
         return defended_squares
+
+    def moving_directions(self) -> list[tuple[int,int]]:
+        return [(1, 2),
+                (2, 1),
+                (2, -1),
+                (1, -2),
+                (-1, -2),
+                (-2, -1),
+                (-2, 1),
+                (-1, 2)
+                ]
 
 
 class Bishop(Piece):
@@ -108,81 +117,76 @@ class Bishop(Piece):
         super().__init__(color.lower(), "Bishop")
 
     def defended_squares(self) -> set[Square]:
-        board = self.current_square.board
-        directions = [[1, 1],
-                      [1, -1],
-                      [-1, 1],
-                      [-1, -1],
-                      ]
         defended_squares = set()
-        current_column, current_row = utils.label_to_indices(self.current_square.name)
+        directions = self.moving_directions()
         for direction in directions:
-            examined_column, examined_row = current_column, current_row
             while True:
-                examined_column, examined_row = examined_column + direction[0], examined_row + direction[1]
-                square_to_examine = board.square([examined_column, examined_row])
-                if not square_to_examine:
+                square = self.current_square.next_square_in_direction(direction)
+                if not square:
                     break
-                if square_to_examine.piece:
-                    defended_squares.add(square_to_examine)
+                elif square.piece:
+                    defended_squares.add(square)
                     break
         return defended_squares
 
+    def moving_directions(self) -> list[tuple[int,int]]:
+        return [(1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1)
+                ]
 
 class Rook(Piece):
     def __init__(self, color: str):
         super().__init__(color.lower(), "Rook")
 
     def defended_squares(self) -> set[Square]:
-        board = self.current_square.board
-        directions = [[0, 1],
-                      [0, -1],
-                      [1, 0],
-                      [-1, 0],
-                      ]
         defended_squares = set()
-        current_column, current_row = utils.label_to_indices(self.current_square.name)
+        directions = self.moving_directions()
         for direction in directions:
-            examined_column, examined_row = current_column, current_row
             while True:
-                examined_column, examined_row = examined_column + direction[0], examined_row + direction[1]
-                square_to_examine = board.square([examined_column, examined_row])
-                if not square_to_examine:
+                square = self.current_square.next_square_in_direction(direction)
+                if not square:
                     break
-                if square_to_examine.piece:
-                    defended_squares.add(square_to_examine)
+                elif square.piece:
+                    defended_squares.add(square)
                     break
         return defended_squares
 
+    def moving_directions(self) -> list[tuple[int,int]]:
+        return [(0, 1),
+                (0, -1),
+                (1, 0),
+                (-1, 0)
+                ]
 
 class Queen(Piece):
     def __init__(self, color: str):
         super().__init__(color.lower(), "Queen")
 
     def defended_squares(self) -> set[Square]:
-        board = self.current_square.board
-        directions = [[1, 1],
-                      [1, -1],
-                      [-1, 1],
-                      [-1, -1],
-                      [0, 1],
-                      [0, -1],
-                      [1, 0],
-                      [-1, 0],
-                      ]
         defended_squares = set()
-        current_column, current_row = utils.label_to_indices(self.current_square.name)
+        directions = self.moving_directions()
         for direction in directions:
-            examined_column, examined_row = current_column, current_row
             while True:
-                examined_column, examined_row = examined_column + direction[0], examined_row + direction[1]
-                square_to_examine = board.square([examined_column, examined_row])
-                if not square_to_examine:
+                square = self.current_square.next_square_in_direction(direction)
+                if not square:
                     break
-                if square_to_examine.piece:
-                    defended_squares.add(square_to_examine)
+                elif square.piece:
+                    defended_squares.add(square)
                     break
         return defended_squares
+
+    def moving_directions(self) -> list[tuple[int,int]]:
+        return [(1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+                (0, 1),
+                (0, -1),
+                (1, 0),
+                (-1, 0)
+                ]
 
 
 class King(Piece):
@@ -191,33 +195,37 @@ class King(Piece):
 
     def defended_squares(self) -> set[Square]:
         defended_squares = set()
-        board = self.current_square.board
-        directions = [[1, 1],
-                      [1, -1],
-                      [-1, 1],
-                      [-1, -1],
-                      [0, 1],
-                      [0, -1],
-                      [1, 0],
-                      [-1, 0],
-                      ]
+        directions = self.moving_directions()
         for direction in directions:
-            current_column, current_row = utils.label_to_indices(self.current_square.name)
-            examined_column, examined_row = current_column + direction[0], current_row + direction[1]
-            square_to_examine = board.square([examined_column, examined_row])
-            if square_to_examine:
-                defended_squares.add(square_to_examine)
+            while True:
+                square = self.current_square.next_square_in_direction(direction)
+                if not square:
+                    break
+                elif square.piece:
+                    defended_squares.add(square)
+                    break
         return defended_squares
 
     def moving_squares(self) -> set[Square]:
         moving_squares = set()
         board = self.current_square.board
         opposite_color_pieces = board.black_pieces if self.color == "white" else board.white_pieces
-        for square_to_examine in self.defended_squares():
-            if not square_to_examine.piece or square_to_examine.piece.color == self.opposite_color:
+        for square in self.defended_squares():
+            if not square.piece or square.piece.color == self.opposite_color:
                 for piece in opposite_color_pieces.values():
-                    if square_to_examine in piece.defended_squares():
+                    if square in piece.defended_squares():
                         break
                 else:
-                    moving_squares.add(square_to_examine)
+                    moving_squares.add(square)
         return moving_squares
+
+    def moving_directions(self) -> list[tuple[int,int]]:
+        return [(1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+                (0, 1),
+                (0, -1),
+                (1, 0),
+                (-1, 0)
+                ]

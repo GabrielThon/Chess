@@ -112,13 +112,17 @@ class Square:
             return False
         # Removes piece from the board corresponding color piece collection
         if self.piece.color == "white":
-            self.board.white_pieces[self.name] = None
+            del self.board.white_pieces[self.name]
         else:
-            self.board.black_pieces[self.name] = None
+            del self.board.black_pieces[self.name]
         #Removes link between piece and square
         self.piece.current_square = None
         self.piece = None
         return True
+
+    def next_square_in_direction(self, direction: tuple[int, int]) -> Square:
+        return self.board.square([self.column + direction[0], self.row + direction[1]])
+
 
 if __name__ == "__main__":
     pass

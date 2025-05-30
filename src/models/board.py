@@ -65,6 +65,13 @@ class Board:
     def all_pieces(self):
         return self.white_pieces | self.black_pieces
 
+    def controlled_squares(self, color_string: str) -> set[Square]:
+        squares = set()
+        pieces = self.white_pieces if color_string == "white" else self.black_pieces
+        for piece in pieces.values():
+            squares = squares | piece.controlled_squares()
+        return squares
+
 class Square:
     def __init__(self, string_square: str, board: Board):
         if not utils.is_valid_square_string(string_square):

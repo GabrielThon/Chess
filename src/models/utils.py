@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models import Square
+    from src.models.board import Square
 
 def starting_position():
     return [["white","Rook","a1"],
@@ -40,27 +40,15 @@ def starting_position():
 
 
 def generate_columns_rows():
-    columns = [chr(i) for i in range(ord('a'), ord('h') + 1)]
-    rows = [str(i) for i in range(1, 9)]
-    return columns, rows
+    return list("abcdefgh"), [str(i) for i in range(1, 9)]
 
 
-def is_valid_square_string(string: str):
-    if len(string) != 2:
-        return False
-
-    columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-    if string[0] not in columns:
-        return False
-
-    if not string[1].isdigit():
-        return False
-    row = int(string[1])
-    rows = range(1, 9, 1)
-    if row not in rows:
-        return False
-
-    return True
+def is_valid_square_string(string: str) -> bool:
+    return (
+        len(string) == 2 and
+        string[0] in 'abcdefgh' and
+        string[1] in '12345678'
+    )
 
 
 def is_valid_color(color: str):
@@ -70,7 +58,8 @@ def is_valid_color(color: str):
 
 
 def label_to_indices(label):
-    # TO DO : checks on label
+    if not is_valid_square_string(label):
+        raise ValueError(f"Invalid square label: {label}")
     col = ord(label[0]) - ord('a')
     row = int(label[1]) - 1
     return col, row

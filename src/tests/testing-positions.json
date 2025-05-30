@@ -1,0 +1,26 @@
+[
+  {
+    "name": "unblocked_pawn_moves",
+    "position": [
+      ["white", "Pawn", "a2", ["a3", "a4"]],
+      ["white", "Pawn", "c3", ["c4"]],
+      ["black", "Pawn", "c6", ["c5"]],
+      ["black", "Pawn", "a7", ["a6", "a5"]]
+    ]
+  },
+  {
+    "name": "blocked_pawn_moves",
+    "position": [
+      ["white", "Pawn", "a4", []],
+      ["black", "Pawn", "a5", []]
+    ]
+  },
+  {
+    "name": "pawn_moves_with_captures",
+    "position": [
+      ["white", "Pawn", "d4", ["e5"]],
+      ["black", "Pawn", "d5", []],
+      ["black", "Pawn", "e5", ["e4","d4"]]
+    ]
+  }
+]

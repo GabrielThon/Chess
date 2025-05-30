@@ -1,0 +1,78 @@
+[
+  {
+    "name": "pawn_pushing_without_obstacles",
+    "position": [
+      ["white", "Pawn", "a2", ["a3", "a4"]],
+      ["white", "Pawn", "a6", ["a7"]],
+      ["white", "Pawn", "c4", ["c5"]],
+      ["black", "Pawn", "f4", ["f3"]],
+      ["black", "Pawn", "h7", ["h6", "h5"]]
+    ]
+  },
+  {
+    "name": "pawn_pushing_with_obstacles",
+    "position": [
+      ["white", "Pawn", "c2", []],
+      ["black", "Pawn", "c3", []],
+      ["white", "Pawn", "d6", []],
+      ["black", "Pawn", "d7", []],
+      ["white", "Pawn", "e2", ["e3"]],
+      ["black", "Pawn", "e4", ["e3"]],
+      ["white", "Pawn", "f5", ["f6"]],
+      ["black", "Pawn", "f7", ["f6"]]
+    ]
+  },
+  {
+    "name": "pawn_captures",
+    "position": [
+      ["white", "Pawn", "b2", ["a3", "c3"]],
+      ["black", "Pawn", "a3", ["a2", "b2"]],
+      ["black", "Pawn", "b3", []],
+      ["black", "Pawn", "c3", ["c2", "b2"]],
+      ["black", "Pawn", "f7", ["f6", "f5", "e6"]],
+      ["white", "Pawn", "e6", ["e7", "f7"]],
+      ["black", "Pawn", "g6", ["g5"]]
+    ]
+  },
+  {
+    "name": "knight_moves",
+    "position": [
+      ["white", "Knight", "c2", ["a1", "b4", "d4", "e3", "e1"]],
+      ["white", "Pawn", "a3", ["a4"]],
+      ["black", "Pawn", "d4", ["d3"]]
+    ]
+  },
+  {
+    "name": "bishop_moves",
+    "position": [
+      ["white", "Bishop", "e4", ["b1", "c2", "d3", "f5", "h1", "g2", "f3", "d5"]],
+      ["white", "Pawn", "g6", ["g7"]],
+      ["black", "Pawn", "d5", ["d4","e4"]]
+    ]
+  },
+  {
+    "name": "rook_moves",
+    "position": [
+      ["white", "Rook", "d4", ["d3", "d5", "d6", "d7", "d8", "a4", "b4", "c4", "e4"]],
+      ["white", "Pawn", "d2", ["d3"]],
+      ["black", "Pawn", "e4", ["e3"]]
+    ]
+  },
+  {
+    "name": "queen_moves",
+    "position": [
+      ["white", "Queen", "d4",
+        ["a1", "b2", "c3",
+          "e5",
+          "d1", "d2", "d3",
+          "d5", "d6", "d7", "d8",
+          "g1", "f2", "e3",
+          "c4",
+          "e4", "f4"]],
+      ["white", "Pawn", "f6", ["f7"]],
+      ["white", "Pawn", "c5", ["c6"]],
+      ["black", "Pawn", "c4", ["c3"]],
+      ["black", "Pawn", "f4", ["f3"]]
+    ]
+  }
+]

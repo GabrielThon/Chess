@@ -9,7 +9,8 @@ class Board:
     def __init__(self):
         self.columns, self.rows = utils.generate_columns_rows()
         self._create_squares()
-        self.pieces: dict[str, dict[str,Piece]] = {}
+        self.pieces: dict[str, dict[str,Piece]] = {"white" : {},
+                                                   "black" : {}}
         self._initial_position()
 
     @classmethod
@@ -17,7 +18,8 @@ class Board:
         board = cls.__new__(cls)
         board.columns, board.rows = utils.generate_columns_rows()
         board._create_squares()
-        board.white_pieces, board.black_pieces = {}, {}
+        board.pieces = {"white" : {},
+                        "black" : {}}
         return board
 
     def __str__(self):
@@ -90,7 +92,7 @@ class Position:
             for color, pieces in self.pieces.items()
         }
         nb_kings = {"white" :len(kings["white"]),
-                    "black" :len(kings["white"])}
+                    "black" :len(kings["black"])}
         for nb_king in nb_kings.values():
             if nb_king != 1:
                 raise exceptions.InvalidNumberOfKingsError(nb_kings)
@@ -166,6 +168,7 @@ class Square:
 
         piece = piece_cls(color=color_string)
         piece.current_square = self
+        self.piece = piece
         self.board.pieces[color_string][self.name] = piece
         return piece
 

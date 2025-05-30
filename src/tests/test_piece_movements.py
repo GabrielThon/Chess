@@ -2,12 +2,11 @@ import pytest
 import json
 from pathlib import Path
 
-def load_positions():
-    with open(Path().resolve() / "testing-positions.json") as f:
-        return json.load(f)
+POSITIONS_PATH = Path(__file__).parent / "test_piece_movements.json"
+positions = json.loads(POSITIONS_PATH.read_text())
+position_ids = [p["name"] for p in positions]
 
-@pytest.mark.parametrize("scenario", load_positions())
-
+@pytest.mark.parametrize("scenario", positions, ids=position_ids)
 def test_pieces_moving_squares(emptyboard, scenario):
     for color, piece_type, square, _ in scenario["position"]:
         emptyboard.place(color, piece_type, square)

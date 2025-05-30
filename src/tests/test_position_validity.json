@@ -1,0 +1,54 @@
+[
+  {
+    "name": "missing_both_kings",
+    "position": [
+    ],
+    "move": "white",
+    "result" : "InvalidNumberOfKingsError"
+  },
+  {
+    "name": "missing_white_king",
+    "position": [
+      ["black", "King","e8"]
+    ],
+    "move": "white",
+    "result" : "InvalidNumberOfKingsError"
+  },
+  {
+    "name": "missing_black_king",
+    "position": [
+      ["white", "King","e1"]
+    ],
+    "move": "white",
+    "result" : "InvalidNumberOfKingsError"
+  },
+  {
+    "name": "both_kings_there",
+    "position": [
+      ["white", "King","e1"],
+      ["black", "King","e8"]
+    ],
+    "move": "white",
+    "result" : "True"
+  },
+  {
+    "name": "too_many_kings",
+    "position": [
+      ["white", "King","e1"],
+      ["white", "King","a1"],
+      ["black", "King","e8"]
+    ],
+    "move": "white",
+    "result" : "InvalidNumberOfKingsError"
+  },
+    {
+    "name": "adjacent_kings",
+    "position": [
+      ["white", "King","e4"],
+      ["black", "King","e5"]
+    ],
+    "move": "white",
+    "result" : "NonPlayingPlayerKingInCheckError",
+    "misc": "Counts as the black King being in check"
+    }
+]

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from .pieces import *
+from .pieces import Piece, Pawn, Knight, Bishop, Rook, Queen, King
 from . import utils
+from .exceptions import InvalidNumberOfKingsError
 from typing import Optional
 
+#TO DO : For now board and position are intertwined, that will need some refacto once considering historics
 class Board:
     def __init__(self):
         self.columns, self.rows = utils.generate_columns_rows()
         self._create_squares()
-        self.white_pieces: dict[str,Piece] = {}
-        self.black_pieces: dict[str,Piece] = {}
+        self.pieces: dict[str, dict[str,Piece]] = {}
         self._initial_position()
 
     @classmethod
@@ -63,14 +64,58 @@ class Board:
 
     @property
     def all_pieces(self):
-        return self.white_pieces | self.black_pieces
+        return {piece for color_pieces in self.pieces.values() for piece in color_pieces.values()}
 
     def controlled_squares(self, color_string: str) -> set[Square]:
         squares = set()
-        pieces = self.white_pieces if color_string == "white" else self.black_pieces
+        pieces = self.pieces[color_string]
         for piece in pieces.values():
             squares = squares | piece.controlled_squares()
         return squares
+
+#State of the board
+class Position:
+    def __init__(self, board: Board, whose_move: str):
+        self.pieces = dict.copy(board.pieces)
+        self.controlled_squares = {"white" : board.controlled_squares("white"),
+                                   "black" : board.controlled_squares("black")}
+        self.whose_move = whose_move
+
+    def assert_valid_position(self):
+        #Must have a single king of each color
+        kings = {
+            color: [piece for piece in pieces.values() if isinstance(piece, King)]
+            for color, pieces in self.pieces.items()
+        }
+        nb_kings = {"white" :len(kings["white"]),
+                    "black" :len(kings["white"])}
+        for nb_king in nb_kings.values():
+            if nb_king != 1:
+                raise InvalidNumberOfKingsError(nb_kings)
+
+        #The king of the player not playing must not be in check
+
+    def is_valid_position(self):
+        try:
+            self.assert_valid_position()
+        except InvalidNumberOfKingsError as e1:
+            print (e1)
+            return False
+        else:
+            return True
+
+
+#Succession of positions
+class Game:
+    def __init__(self):
+        self.positions = []
+        pass
+
+    def add_position(self, position: Position):
+        self.positions.append(position)
+
+    def get_position(self, halfmove_number: int):
+        return self.positions[halfmove_number]
 
 class Square:
     def __init__(self, string_square: str, board: Board):
@@ -106,11 +151,7 @@ class Square:
 
         piece = piece_cls(color=color_string)
         piece.current_square = self
-        self.piece = piece
-        if color_string == "white":
-            self.board.white_pieces[self.name] = piece
-        else:
-            self.board.black_pieces[self.name] = piece
+        self.board.pieces[color_string][self.name] = piece
         return piece
 
     def remove_piece(self):
@@ -118,10 +159,7 @@ class Square:
         if not self.piece:
             return False
         # Removes piece from the board corresponding color piece collection
-        if self.piece.color == "white":
-            del self.board.white_pieces[self.name]
-        else:
-            del self.board.black_pieces[self.name]
+        del self.board.pieces[self.piece.color][self.name]
         #Removes link between piece and square
         self.piece.current_square = None
         self.piece = None

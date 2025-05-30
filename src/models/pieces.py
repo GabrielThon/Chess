@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from . import utils
 
@@ -216,10 +216,9 @@ class King(Piece):
     def moving_squares(self) -> set[Square]:
         moving_squares = set()
         board = self.current_square.board
-        opposite_color_pieces = board.black_pieces if self.color == "white" else board.white_pieces
         for square in self.controlled_squares():
             if not square.piece or square.piece.color == self.opposite_color:
-                for piece in opposite_color_pieces.values():
+                for piece in board.pieces[self.opposite_color].values():
                     if square in piece.controlled_squares():
                         break
                 else:

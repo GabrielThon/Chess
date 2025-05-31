@@ -16,38 +16,34 @@ class Position:
 
     def assert_valid_position(self):
         # Each player must have one king
-        kings = self.assert_has_two_kings()
+        if not self.has_two_kings():
+            raise exceptions.InvalidNumberOfKingsError()
         # The king of the player not playing must not be in check
-        if self.king_in_check(kings[self.not_turn_to_move]):
+        if self.king_in_check(next(iter(self.pieces[self.not_turn_to_move]["King"]))):
             raise exceptions.NonPlayingPlayerKingInCheckError(self.not_turn_to_move)
         # There should be no pawn on the 1st or 8th rank
-        self.assert_no_pawn_on_first_eighth_rank()
+        if self.has_pawn_on_first_eighth_rank():
+            raise exceptions.PawnOnFirstOrEighthRowError()
 
-    def assert_has_two_kings(self) -> dict[str, King]:
-        # If each player has a king, returns a dict [color, king], otherwise raises an error
-        kings = {}
+    def has_two_kings(self) -> bool:
         for color in self.pieces.keys():
-            king_set = self.pieces[color]["King"]
             if len(self.pieces[color]["King"]) != 1:
-                raise exceptions.InvalidNumberOfKingsError()
-            else:
-                kings[color] = next(iter(king_set))
-        return kings
+                return False
+        return True
 
     def king_in_check(self, king: King) -> bool:
         if king.current_square in self.controlled_squares[king.opposite_color]:
             return True
         return False
 
-    def assert_no_pawn_on_first_eighth_rank(self):
-        pawns = {
-            color: [piece for piece in pieces.values() if isinstance(piece, Pawn)]
-            for color, pieces in self.pieces.items()
-        }
-        for pawn_list in pawns.values():
-            for pawn in pawn_list:
+    def has_pawn_on_first_eighth_rank(self):
+        for color in self.pieces.keys():
+            pawn_set = self.pieces[color]["Pawn"]
+            for pawn in pawn_set:
                 if pawn.current_square.row in [0, 7]:
-                    raise exceptions.PawnOnFirstOrEighthRowError(pawn)
+                    return True
+        return False
+
 
     def is_valid_position(self):
         try:

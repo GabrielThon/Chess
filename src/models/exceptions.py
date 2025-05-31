@@ -35,5 +35,5 @@ class NonPlayingPlayerKingInCheckError(InvalidPositionError):
 class PawnOnFirstOrEighthRowError(InvalidPositionError):
     """Raised on first encounter of a pawn on first or eighth row"""
 
-    def __init__(self, pawn: "Pawn"):
-        super().__init__(f"Invalid position : Pawn on {pawn.current_square.name} cannot be there")
+    def __init__(self):
+        super().__init__(f"Invalid position : A pawn is on the first or eighth rank")

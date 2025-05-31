@@ -9,7 +9,7 @@
   {
     "name": "missing_white_king",
     "position": [
-      ["black", "King","e8"]
+      ["black", "King", "e8"]
     ],
     "move": "white",
     "result" : "InvalidNumberOfKingsError"
@@ -17,7 +17,7 @@
   {
     "name": "missing_black_king",
     "position": [
-      ["white", "King","e1"]
+      ["white", "King", "e1"]
     ],
     "move": "white",
     "result" : "InvalidNumberOfKingsError"
@@ -25,8 +25,8 @@
   {
     "name": "both_kings_there",
     "position": [
-      ["white", "King","e1"],
-      ["black", "King","e8"]
+      ["white", "King", "e1"],
+      ["black", "King", "e8"]
     ],
     "move": "white",
     "result" : "True"
@@ -34,21 +34,71 @@
   {
     "name": "too_many_kings",
     "position": [
-      ["white", "King","e1"],
-      ["white", "King","a1"],
-      ["black", "King","e8"]
+      ["white", "King", "e1"],
+      ["white", "King", "a1"],
+      ["black", "King", "e8"]
     ],
     "move": "white",
     "result" : "InvalidNumberOfKingsError"
   },
-    {
+  {
     "name": "adjacent_kings",
     "position": [
-      ["white", "King","e4"],
-      ["black", "King","e5"]
+      ["white", "King", "e4"],
+      ["black", "King", "e5"]
     ],
     "move": "white",
     "result" : "NonPlayingPlayerKingInCheckError",
     "misc": "Counts as the black King being in check"
-    }
+    },
+  {
+    "name": "checked_black_king",
+    "position": [
+      ["white", "King", "a1"],
+      ["white", "Bishop", "c6"],
+      ["black", "King", "a8"]
+    ],
+    "move": "white",
+    "result" : "NonPlayingPlayerKingInCheckError"
+  },
+   {
+    "name": "white_pawn_on_first_rank",
+    "position": [
+      ["white", "King", "a1"],
+      ["white", "Pawn", "c1"],
+      ["black", "King", "a8"]
+    ],
+    "move": "white",
+    "result" : "PawnOnFirstOrEighthRowError"
+  },
+  {
+    "name": "white_pawn_on_eighth_rank",
+    "position": [
+      ["white", "King", "a1"],
+      ["white", "Pawn", "c8"],
+      ["black", "King", "a8"]
+    ],
+    "move": "white",
+    "result" : "PawnOnFirstOrEighthRowError"
+  },
+     {
+    "name": "black_pawn_on_first_rank",
+    "position": [
+      ["white", "King", "a1"],
+      ["black", "Pawn", "c1"],
+      ["black", "King", "a8"]
+    ],
+    "move": "white",
+    "result" : "PawnOnFirstOrEighthRowError"
+  },
+  {
+    "name": "black_pawn_on_eighth_rank",
+    "position": [
+      ["white", "King", "a1"],
+      ["black", "Pawn", "c8"],
+      ["black", "King", "a8"]
+    ],
+    "move": "white",
+    "result" : "PawnOnFirstOrEighthRowError"
+  }
 ]

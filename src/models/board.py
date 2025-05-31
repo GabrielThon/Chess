@@ -4,22 +4,33 @@ from .pieces import Piece, Pawn, Knight, Bishop, Rook, Queen, King
 from . import utils, exceptions
 from typing import Optional
 
-#TO DO : For now board and position are intertwined, that will need some refacto once considering historics
+
+# TO DO : For now board and position are intertwined, that will need some refacto once considering historics
 class Board:
     def __init__(self):
         self.columns, self.rows = utils.generate_columns_rows()
         self._create_squares()
-        self.pieces: dict[str, dict[str,Piece]] = {"white" : {},
-                                                   "black" : {}}
+        self.pieces = self.pieces_initialize()  # keys : [color] [piece_type]
         self._initial_position()
+
+    @staticmethod
+    def pieces_initialize() -> dict[str, dict[str, set[Piece]]]:
+        colors = ["white", "black"]
+        piece_types = ["King", "Queen", "Rook", "Bishop", "Knight", "Pawn"]
+
+        pieces = {}
+        for color in colors:
+            pieces[color] = {}
+            for piece_type in piece_types:
+                pieces[color][piece_type] = set()
+        return pieces
 
     @classmethod
     def create_empty_board(cls):
         board = cls.__new__(cls)
         board.columns, board.rows = utils.generate_columns_rows()
         board._create_squares()
-        board.pieces = {"white" : {},
-                        "black" : {}}
+        board.pieces = board.pieces_initialize()
         return board
 
     def __str__(self):
@@ -32,7 +43,7 @@ class Board:
         return board_string
 
     def square(self, key) -> Optional[Square]:
-        #Returns None if the label or indices point at a square not in the grid.
+        # Returns None if the label or indices point at a square not in the grid.
         if isinstance(key, str):
             if not utils.is_valid_square_string(key):
                 return None
@@ -65,22 +76,30 @@ class Board:
 
     @property
     def all_pieces(self):
-        return {piece for color_pieces in self.pieces.values() for piece in color_pieces.values()}
+        all_pieces = set()
+        for type_dict in self.pieces.values():
+            for piece_set in type_dict.values():
+                for piece in piece_set:
+                    all_pieces.add(piece)
+        return all_pieces
+
+
+
 
     def controlled_squares(self, color_string: str) -> set[Square]:
         squares = set()
-        pieces = self.pieces[color_string]
-        for piece in pieces.values():
-            squares = squares | piece.controlled_squares()
+        piecetype_dict = self.pieces[color_string]
+        for piece_set in piecetype_dict.values():
+            for piece in piece_set:
+                squares = squares | piece.controlled_squares()
         return squares
-
 
 
 class Square:
     def __init__(self, string_square: str, board: Board):
         if not utils.is_valid_square_string(string_square):
             raise ValueError(f"Invalid square label: {string_square}")
-        self.column,self.row = utils.label_to_indices(string_square)
+        self.column, self.row = utils.label_to_indices(string_square)
         self.name = string_square
         self.board = board
         self.piece = None
@@ -90,7 +109,6 @@ class Square:
             return str(self.piece)
         else:
             return "  "
-
 
     def __repr__(self):
         return self.name
@@ -111,17 +129,18 @@ class Square:
         piece = piece_cls(color=color_string)
         piece.current_square = self
         self.piece = piece
-        self.board.pieces[color_string][self.name] = piece
+        self.board.pieces[color_string][piece.type].add(piece)
         return piece
 
     def remove_piece(self):
         # Returns false if no piece is found on the square
         if not self.piece:
             return False
+        piece = self.piece
         # Removes piece from the board corresponding color piece collection
-        del self.board.pieces[self.piece.color][self.name]
-        #Removes link between piece and square
-        self.piece.current_square = None
+        self.board.pieces[piece.color][piece.type].remove(piece)
+        # Removes link between piece and square
+        piece.current_square = None
         self.piece = None
         return True
 

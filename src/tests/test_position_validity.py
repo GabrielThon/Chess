@@ -1,7 +1,7 @@
 import pytest
 import json
 from pathlib import Path
-from src.models.board import Position
+from src.models.position import Position
 from src.models.exceptions import InvalidPositionError, InvalidNumberOfKingsError, NonPlayingPlayerKingInCheckError
 
 POSITIONS_PATH = Path(__file__).parent / "test_position_validity.json"

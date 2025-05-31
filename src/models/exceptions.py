@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.models.pieces import Pawn
 
+
 class OutofBoundSquareError(Exception):
     """Exception raised when a square is not within the board"""
 
@@ -19,9 +20,9 @@ class InvalidPositionError(Exception):
 class InvalidNumberOfKingsError(InvalidPositionError):
     """Raised when the position doesn't contain 1 king of each color"""
 
-    def __init__(self, nb_kings: dict[str, int]):
+    def __init__(self):
         super().__init__(
-            f"Invalid position: must have exactly one white king and one black king., but found {nb_kings["white"]} white king(s) and {nb_kings["black"]} black king(s)")
+            f"Invalid position: must have exactly one king of each color.")
 
 
 class NonPlayingPlayerKingInCheckError(InvalidPositionError):

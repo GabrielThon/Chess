@@ -23,13 +23,13 @@ def test_valid_square_attribute_access(emptyboard):
 
 def test_board_place(emptyboard):
     assert not emptyboard.square("a2").piece
-    emptyboard.place("white","Pawn","a2")
-    assert emptyboard.pieces["white"]["a2"].type == "Pawn"
+    pawna2 = emptyboard.place("white","Pawn","a2")
+    assert pawna2 in emptyboard.pieces["white"]["Pawn"]
 
 def test_initial_position(fullboard):
     # There should be 16 pieces of each color
-    assert len(fullboard.pieces["white"]) == 16
-    assert len(fullboard.pieces["black"]) == 16
+    assert sum(len(piece_types) for piece_types in fullboard.pieces["white"].values())== 16
+    assert sum(len(piece_types) for piece_types in fullboard.pieces["black"].values())== 16
 
     # Checking pieces types and color on all squares matching starting position
     for [color, piece_type, square_label] in utils.starting_position():

@@ -2,7 +2,7 @@ import pytest
 import json
 from pathlib import Path
 
-POSITIONS_PATH = Path(__file__).parent / "test_piece_movements.json"
+POSITIONS_PATH = Path(__file__).parent / "test_pieces_movements.json"
 positions = json.loads(POSITIONS_PATH.read_text())
 position_ids = [p["name"] for p in positions]
 

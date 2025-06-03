@@ -17,3 +17,9 @@ class Direction:
     @classmethod
     def knight_jumps(cls) -> set["Direction"]:
         return {cls(1, 2), cls(2, 1), cls(2, -1), cls(1, -2), cls(-1, -2), cls(-2, -1), cls(-2, 1), cls(-1, 2)}
+
+    def __eq__(self, other: "Direction"):
+         return self.as_tuple() == other.as_tuple()
+
+    def __hash__(self):
+        return hash(self.as_tuple())

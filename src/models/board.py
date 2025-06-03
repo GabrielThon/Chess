@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from .pieces import Piece, Pawn, Knight, Bishop, Rook, Queen, King
-from . import utils, exceptions
+from .square import Square
+from .pieces import Piece
+from . import utils
 from typing import Optional
 
 
 # TO DO : For now board and position are intertwined, that will need some refacto once considering historics
 class Board:
-    def __init__(self):
+    def __init__(self, empty=False):
         self.columns, self.rows = utils.generate_columns_rows()
         self._create_squares()
         self.pieces = self.pieces_initialize()  # keys : [color] [piece_type]
-        self._initial_position()
+        if not empty:
+            self._initial_position()
 
     @staticmethod
     def pieces_initialize() -> dict[str, dict[str, set[Piece]]]:
@@ -25,14 +27,6 @@ class Board:
                 pieces[color][piece_type] = set()
         return pieces
 
-    @classmethod
-    def create_empty_board(cls):
-        board = cls.__new__(cls)
-        board.columns, board.rows = utils.generate_columns_rows()
-        board._create_squares()
-        board.pieces = board.pieces_initialize()
-        return board
-
     def __str__(self):
         board_string = " ——" * 8 + "\n"
         for row in reversed(self.rows):
@@ -42,7 +36,7 @@ class Board:
             board_string += "\n" + " ——" * 8 + "\n"
         return board_string
 
-    def square(self, key) -> Optional[Square]:
+    def square(self, key) -> Optional["Square"]:
         # Returns None if the label or indices point at a square not in the grid.
         if isinstance(key, str):
             if not utils.is_valid_square_string(key):
@@ -82,74 +76,6 @@ class Board:
                 for piece in piece_set:
                     all_pieces.add(piece)
         return all_pieces
-
-
-
-class Square:
-    def __init__(self, string_square: str, board: Board):
-        if not utils.is_valid_square_string(string_square):
-            raise ValueError(f"Invalid square label: {string_square}")
-        self.column, self.row = utils.label_to_indices(string_square)
-        self.name = string_square
-        self.board = board
-        self.piece = None
-
-    def __str__(self):
-        if self.piece:
-            return str(self.piece)
-        else:
-            return "  "
-
-    def __repr__(self):
-        return self.name
-
-    def place(self, color_string, piece_string) -> Optional[Piece]:
-        piece_string_to_cls = {
-            "Pawn": Pawn,
-            "Knight": Knight,
-            "Bishop": Bishop,
-            "Rook": Rook,
-            "Queen": Queen,
-            "King": King
-        }
-        piece_cls = piece_string_to_cls.get(piece_string)
-        if piece_cls is None:
-            return None
-
-        piece = piece_cls(color=color_string)
-        piece.current_square = self
-        self.piece = piece
-        self.board.pieces[color_string][piece.type].add(piece)
-        return piece
-
-    def remove_piece(self):
-        # Returns false if no piece is found on the square
-        if not self.piece:
-            return False
-        piece = self.piece
-        # Removes piece from the board corresponding color piece collection
-        self.board.pieces[piece.color][piece.type].remove(piece)
-        # Removes link between piece and square
-        piece.current_square = None
-        self.piece = None
-        return True
-
-    def next_square_in_direction(self, direction: tuple[int, int]) -> Square:
-        return self.board.square([self.column + direction[0], self.row + direction[1]])
-
-    def explore_in_direction(self, direction: tuple[int, int]) -> tuple[set["Square"], "Piece"]:
-        squares: set["Square"] = set()
-        square = self.next_square_in_direction(direction)
-        while square:
-            squares.add(square)
-            if square.piece:
-                blocking_piece = square.piece
-                break
-            square = square.next_square_in_direction(direction)
-        else:
-            blocking_piece = None
-
-        return squares, blocking_piece
 
 
 if __name__ == "__main__":

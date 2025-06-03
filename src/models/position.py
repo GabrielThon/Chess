@@ -51,7 +51,7 @@ class Position:
                     return True
         return False
 
-    def controlled_squares(self, color_string: str) -> set[Square]:
+    def controlled_squares(self, color_string: "str") -> set["Square"]:
         return set().union(*(piece.controlled_squares() for piece_set in self.pieces[color_string].values() for piece in piece_set))
 
     def explore_checks_and_pins(self) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
@@ -72,9 +72,7 @@ class Position:
             elif first_piece.color == king.color:
                 squareset2, second_piece = first_piece.current_square.explore_in_direction(direction)
                 if second_piece and second_piece.color == king.opposite_color and isinstance(second_piece, RecursiveControlledSquaresMixin) and direction in second_piece.moving_directions():
-                    squareset = (squareset1 | squareset2)
-                    squareset.remove(first_piece.current_square)
-                    pinned_pieces_squares_dict[first_piece] = squareset if direction in first_piece.moving_directions() else set()
+                    pinned_pieces_squares_dict[first_piece] = (squareset1 | squareset2) - {first_piece.current_square} if direction in first_piece.moving_directions() else set()
         return checking_pieces, intercepting_squares, pinned_pieces_squares_dict
 
     def legal_moves(self):

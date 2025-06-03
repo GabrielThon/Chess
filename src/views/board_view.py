@@ -12,7 +12,7 @@ class BoardView:
         self._create_piece_views()
 
     def _create_piece_views(self):
-        for piece in self.board.all_pieces.values():
+        for piece in self.board.all_pieces:
             piece_view = PieceView(piece)
             self.piece_views[piece.current_square.name] = piece_view
 

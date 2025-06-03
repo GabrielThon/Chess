@@ -1,5 +1,5 @@
-from src.models.board import Board
-from src.models.pieces import Pawn, King
+from src.models.board import Board, Square
+from src.models.pieces import Piece, King, RecursiveControlledSquaresMixin
 from src.models import exceptions
 
 
@@ -44,7 +44,6 @@ class Position:
                     return True
         return False
 
-
     def is_valid_position(self):
         try:
             self.assert_valid_position()
@@ -53,6 +52,75 @@ class Position:
             return False
         else:
             return True
+
+    def is_controlled_square(self, square: "Square", color: str) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
+        directions = [(1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+                (0, 1),
+                (0, -1),
+                (1, 0),
+                (-1, 0)
+                ]
+        for direction in directions:
+            squareset1, first_piece = square.explore_in_direction(direction)
+            if not first_piece:
+                continue
+            if first_piece.color == color and isinstance(first_piece, RecursiveControlledSquaresMixin) and direction in first_piece.moving_directions():
+                return True
+        return False
+
+    def explore_checks_and_pins(self) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
+        pinned_pieces_squares_dict = {}
+        checking_pieces = set()
+        intercepting_squares = set()
+        king = next(iter(self.pieces[self.whose_move]["King"]))
+        for direction in king.moving_directions():
+            squareset1, first_piece = king.current_square.explore_in_direction(direction)
+            if not first_piece:
+                continue
+            if first_piece.color == king.opposite_color and isinstance(first_piece, RecursiveControlledSquaresMixin) and direction in first_piece.moving_directions():
+                checking_pieces.add(first_piece)
+                if len(checking_pieces) == 1:
+                    intercepting_squares = squareset1
+                else:
+                    intercepting_squares = set()
+            elif first_piece.color == king.color:
+                squareset2, second_piece = first_piece.current_square.explore_in_direction(direction)
+                if second_piece and second_piece.color == king.opposite_color and isinstance(second_piece, RecursiveControlledSquaresMixin) and direction in second_piece.moving_directions():
+                    squareset = (squareset1 | squareset2)
+                    squareset.remove(first_piece.current_square)
+                    pinned_pieces_squares_dict[first_piece] = squareset if direction in first_piece.moving_directions() else set()
+        return checking_pieces, intercepting_squares, pinned_pieces_squares_dict
+
+    def legal_moves(self):
+        # For now, assumes valid positions
+        legal_moves = {}
+        checking_pieces, intercepting_squares, pinned_pieces = self.explore_checks_and_pins()
+        if len(checking_pieces) == 0:
+            category = "no check"
+        elif len(checking_pieces) == 1:
+            category = "simple check"
+        else:
+            category = "double check"
+        for piece in (p for s in self.pieces[self.whose_move].values() for p in s):
+            if isinstance(piece, King):
+                uncontrolled_squares = set()
+                for square in piece.moving_squares():
+                    if not self.is_controlled_square(square, piece.opposite_color):
+                        uncontrolled_squares.add(square)
+                legal_moves[piece] = uncontrolled_squares
+                continue
+            if category == "double check":
+                legal_moves[piece] = set()
+                continue
+            restricted_squares = pinned_pieces[piece] if piece in pinned_pieces.keys() else piece.controlled_squares()
+            if category == "no check":
+                legal_moves[piece] = restricted_squares
+            else:  # category == "simple check" -> Intercepting squares
+                legal_moves[piece] = restricted_squares & intercepting_squares
+        return legal_moves
 
 
 # Succession of positions
@@ -66,3 +134,28 @@ class Game:
 
     def get_position(self, halfmove_number: int):
         return self.positions[halfmove_number]
+
+#
+# if __name__ == "__main__":
+#     position_text = {
+#         "name": "pins_and_check_bishop",
+#         "position": [
+#             ["white", "King", "e1"],
+#             ["black", "King", "e8"],
+#             ["black", "Bishop", "a5"],
+#             ["black", "Bishop", "h4"],
+#             ["white", "Bishop", "c3"]
+#         ],
+#         "move": "white",
+#         "result": [
+#             ["white", "King", "e1", ["d1", "d2", "e2", "f1"]],
+#             ["white", "Bishop", "c3", []]
+#         ]
+#     }
+#
+#     board = Board.create_empty_board()
+#     for color, piece_type, square in position_text["position"]:
+#         board.place(color, piece_type, square)
+#
+#     position = Position(board, position_text["move"])
+#     position.legal_moves()

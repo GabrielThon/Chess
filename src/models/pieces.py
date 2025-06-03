@@ -21,10 +21,10 @@ class Piece(ABC):
         self.image_path = Path().resolve() / "images" / (self.type + "_" + self.color + ".svg")
 
     def __repr__(self):
-        return f"{self.type[0]}{self.current_square}-{self.color[0]}"
+        return f"{self.color.capitalize()} {self.type} on {self.current_square.name}"
 
     def __str__(self):
-        return self.type[0] + self.color[0]
+        return f"{self.color.capitalize()} {self.type} on {self.current_square.name}"
 
     @abstractmethod
     def controlled_squares(self) -> set[Square]:
@@ -37,28 +37,19 @@ class Piece(ABC):
         }
 
     @abstractmethod
-    def moving_directions(self) -> list:
+    def moving_directions(self) -> list[tuple[int, int]]:
         pass
 
-    @property
-    def is_pinned(self) -> [bool, tuple[int,int]]:
-        return [False, None]
 
 class RecursiveControlledSquaresMixin:
     # Inheriting classes must implement attribute current_square and method moving_directions
     def controlled_squares(self) -> set[Square]:
-        controlled_squares = set()
+        controlled_squares: set["Square"] = set()
         directions = self.moving_directions()
         for direction in directions:
-            square = self.current_square
-            while True:
-                square = square.next_square_in_direction(direction)
-                if not square:
-                    break
-                controlled_squares.add(square)
-                if square.piece:
-                    break
+            controlled_squares = controlled_squares | self.current_square.explore_in_direction(direction)[0]
         return controlled_squares
+
 
 class Pawn(Piece):
     def __init__(self, color: str):
@@ -160,7 +151,6 @@ class Queen(RecursiveControlledSquaresMixin, Piece):
     def __init__(self, color: str):
         super().__init__(color.lower(), "Queen")
 
-
     def moving_directions(self) -> list[tuple[int, int]]:
         return [(1, 1),
                 (1, -1),
@@ -182,18 +172,16 @@ class King(Piece):
         directions = self.moving_directions()
         for direction in directions:
             square = self.current_square.next_square_in_direction(direction)
-            controlled_squares.add(square)
+            if square:
+                controlled_squares.add(square)
         return controlled_squares
 
     def moving_squares(self) -> set[Square]:
         moving_squares = set()
         board = self.current_square.board
         for square in self.controlled_squares():
-            if square.piece and square.piece.color == self.color:
-                continue
-            elif square in board.controlled_squares(self.opposite_color):
-                continue
-            moving_squares.add(square)
+            if not square.piece or square.piece.color != self.color:
+                moving_squares.add(square)
         return moving_squares
 
     def moving_directions(self) -> list[tuple[int, int]]:

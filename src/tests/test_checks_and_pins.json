@@ -1,0 +1,102 @@
+[
+  {
+    "name": "no_pins",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Pawn", "a5"],
+      ["white", "Knight", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1", "f2"]],
+      ["white", "Knight", "c3",["a2", "b1", "a4", "b5", "d5", "e4", "e2", "d1"]]
+    ]
+  },
+  {
+    "name": "pinned_knight",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "a5"],
+      ["white", "Knight", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1", "f2"]],
+      ["white", "Knight", "c3", []]
+    ]
+  },
+  {
+    "name": "pinned_bishop",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "a5"],
+      ["white", "Bishop", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1", "f2"]],
+      ["white", "Bishop", "c3", ["a5", "b4", "d2"]]
+    ]
+  },
+    {
+    "name": "check_knight",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "h4"],
+      ["white", "Knight", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1"]],
+      ["white", "Knight", "c3", []]
+    ]
+  },
+  {
+    "name": "check_bishop",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "h4"],
+      ["white", "Bishop", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1"]],
+      ["white", "Bishop", "c3", []]
+    ]
+  },
+  {
+    "name": "pinned_knight_with_check",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "a5"],
+      ["black", "Bishop", "h4"],
+      ["white", "Knight", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1"]],
+      ["white", "Knight", "c3", []]
+    ]
+  },
+  {
+    "name": "pinned_bishop_with_check",
+    "position": [
+      ["white", "King", "e1"],
+      ["black", "King", "e8"],
+      ["black", "Bishop", "a5"],
+      ["black", "Bishop", "h4"],
+      ["white", "Bishop", "c3"]
+    ],
+    "move": "white",
+    "result": [
+      ["white", "King", "e1",["d1", "d2", "e2", "f1"]],
+      ["white", "Bishop", "c3", []]
+    ]
+  }
+]

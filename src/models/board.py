@@ -147,6 +147,20 @@ class Square:
     def next_square_in_direction(self, direction: tuple[int, int]) -> Square:
         return self.board.square([self.column + direction[0], self.row + direction[1]])
 
+    def explore_in_direction(self, direction: tuple[int, int]) -> tuple[set["Square"], "Piece"]:
+        squares: set["Square"] = set()
+        square = self.next_square_in_direction(direction)
+        while square:
+            squares.add(square)
+            if square.piece:
+                blocking_piece = square.piece
+                break
+            square = square.next_square_in_direction(direction)
+        else:
+            blocking_piece = None
+
+        return squares, blocking_piece
+
 
 if __name__ == "__main__":
     pass

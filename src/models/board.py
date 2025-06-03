@@ -85,16 +85,6 @@ class Board:
 
 
 
-
-    def controlled_squares(self, color_string: str) -> set[Square]:
-        squares = set()
-        piecetype_dict = self.pieces[color_string]
-        for piece_set in piecetype_dict.values():
-            for piece in piece_set:
-                squares = squares | piece.controlled_squares()
-        return squares
-
-
 class Square:
     def __init__(self, string_square: str, board: Board):
         if not utils.is_valid_square_string(string_square):

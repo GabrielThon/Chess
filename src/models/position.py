@@ -7,8 +7,6 @@ from src.models import exceptions
 class Position:
     def __init__(self, board: Board, whose_move: str):
         self.pieces = dict.copy(board.pieces)
-        self.controlled_squares = {"white": board.controlled_squares("white"),
-                                   "black": board.controlled_squares("black")}
         self.whose_move = whose_move
         self.not_turn_to_move = "black" if self.whose_move == "white" else "black"
         # TO DO : Implement castling rights
@@ -25,6 +23,15 @@ class Position:
         if self.has_pawn_on_first_eighth_rank():
             raise exceptions.PawnOnFirstOrEighthRowError()
 
+    def is_valid_position(self):
+        try:
+            self.assert_valid_position()
+        except exceptions.InvalidPositionError as e:
+            print(e)
+            return False
+        else:
+            return True
+
     def has_two_kings(self) -> bool:
         for color in self.pieces.keys():
             if len(self.pieces[color]["King"]) != 1:
@@ -32,7 +39,7 @@ class Position:
         return True
 
     def king_in_check(self, king: King) -> bool:
-        if king.current_square in self.controlled_squares[king.opposite_color]:
+        if king.current_square in self.controlled_squares(king.opposite_color):
             return True
         return False
 
@@ -44,32 +51,8 @@ class Position:
                     return True
         return False
 
-    def is_valid_position(self):
-        try:
-            self.assert_valid_position()
-        except exceptions.InvalidPositionError as e:
-            print(e)
-            return False
-        else:
-            return True
-
-    def is_controlled_square(self, square: "Square", color: str) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
-        directions = [(1, 1),
-                (1, -1),
-                (-1, 1),
-                (-1, -1),
-                (0, 1),
-                (0, -1),
-                (1, 0),
-                (-1, 0)
-                ]
-        for direction in directions:
-            squareset1, first_piece = square.explore_in_direction(direction)
-            if not first_piece:
-                continue
-            if first_piece.color == color and isinstance(first_piece, RecursiveControlledSquaresMixin) and direction in first_piece.moving_directions():
-                return True
-        return False
+    def controlled_squares(self, color_string: str) -> set[Square]:
+        return set().union(*(piece.controlled_squares() for piece_set in self.pieces[color_string].values() for piece in piece_set))
 
     def explore_checks_and_pins(self) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
         pinned_pieces_squares_dict = {}
@@ -106,11 +89,8 @@ class Position:
             category = "double check"
         for piece in (p for s in self.pieces[self.whose_move].values() for p in s):
             if isinstance(piece, King):
-                uncontrolled_squares = set()
-                for square in piece.moving_squares():
-                    if not self.is_controlled_square(square, piece.opposite_color):
-                        uncontrolled_squares.add(square)
-                legal_moves[piece] = uncontrolled_squares
+                controlled_squares = self.controlled_squares(piece.opposite_color)
+                legal_moves[piece] = piece.moving_squares() - controlled_squares
                 continue
             if category == "double check":
                 legal_moves[piece] = set()

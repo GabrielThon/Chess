@@ -23,49 +23,49 @@ running = True
 needs_redraw = True
 selected_piece = None
 valid_squares = set()
+game_over = False
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = event.pos
-            column = x // boardview.square_width
-            row = boardview.number_of_rows - 1 - (y // boardview.square_height)
-            # row = boardview.number_of_rows - 1 - (y // boardview.square_height)
-            clicked_square = game.current_position.grid[column][row]
+        if not game_over:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                column = x // boardview.square_width
+                row = boardview.number_of_rows - 1 - (y // boardview.square_height)
+                # row = boardview.number_of_rows - 1 - (y // boardview.square_height)
+                clicked_square = game.current_position.grid[column][row]
 
-            piece = clicked_square.piece
-            if selected_piece is None:
-                # First click: try to select a piece
-                if piece and piece.color == game.current_position.whose_move:
-                    selected_piece = piece
-                    print(f"Selected piece {repr(piece)}")
-                    game.current_position.compute_legal_moves()
-                    valid_squares = game.current_position.legal_moves_.get(piece, set())
-                    if not valid_squares:
-                        print(f"{repr(selected_piece)} cannot move")
-                        selected_piece = None
-                        continue
-                    print(f"Available squares {valid_squares}")
+                piece = clicked_square.piece
+                if selected_piece is None:
+                    # First click: try to select a piece
+                    if piece and piece.color == game.current_position.whose_move:
+                        selected_piece = piece
+                        print(f"Selected piece {repr(piece)}")
+                        valid_squares = game.current_position.legal_moves_.get(piece, set())
+                        if not valid_squares:
+                            print(f"{repr(selected_piece)} cannot move")
+                            selected_piece = None
+                            continue
+                        print(f"Available squares {valid_squares}")
+                        needs_redraw = True
+                else:
+                    # Second click: try to make a move
+                    print("Second click")
+                    if clicked_square in valid_squares:
+                        to_square = clicked_square
+                        move = Move(game.current_position, selected_piece, to_square)
+                        game.apply_move(move)
+
+                        # Update boardview with new position
+                        boardview = BoardView(game.current_position, screen)
+
+                    # Reset selection either way
+                    selected_piece = None
+                    valid_squares = set()
                     needs_redraw = True
-            else:
-                # Second click: try to make a move
-                print("Second click")
-                if clicked_square in valid_squares:
-                    to_square = clicked_square
-                    move = Move(game.current_position, selected_piece, to_square)
-                    game.apply_move(move)
-
-                    # Update boardview with new position
-                    boardview = BoardView(game.current_position, screen)
-                print(f"Now it's {game.current_position.whose_move}'s turn")
-
-                # Reset selection either way
-                selected_piece = None
-                valid_squares = set()
-                needs_redraw = True
 
             # dragging_piece = board.try_pick_piece(event.pos)
             # needs_redraw = True
@@ -87,7 +87,10 @@ while running:
         boardview.draw(screen, highlights=valid_squares)
         pygame.display.flip()
         needs_redraw = False
-
+        if game.result is not None:
+            game_over = True
+        else:
+            print(f"Now it's {game.current_position.whose_move}'s turn")
     clock.tick(60)
 
 pygame.quit()

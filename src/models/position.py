@@ -45,7 +45,7 @@ class Position:
         if not self._has_two_kings():
             raise exceptions.InvalidNumberOfKingsError()
         # The king of the player not playing must not be in check
-        if self._king_in_check(next(iter(self.pieces[self.not_turn_to_move]["King"]))):
+        if self.king_in_check(next(iter(self.pieces[self.not_turn_to_move]["King"]))):
             raise exceptions.NonPlayingPlayerKingInCheckError(self.not_turn_to_move)
         # There should be no pawn on the 1st or 8th rank
         if self._has_pawn_on_first_eighth_rank():
@@ -66,7 +66,7 @@ class Position:
                 return False
         return True
 
-    def _king_in_check(self, king: King) -> bool:
+    def king_in_check(self, king: King) -> bool:
         if king.square in self._controlled_squares(king.opposite_color):
             return True
         return False

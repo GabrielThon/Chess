@@ -23,14 +23,13 @@ running = True
 needs_redraw = True
 selected_piece = None
 valid_squares = set()
-game_over = False
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-        if not game_over:
+        if not game.result:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 column = x // boardview.square_width
@@ -43,21 +42,20 @@ while running:
                     # First click: try to select a piece
                     if piece and piece.color == game.current_position.whose_move:
                         selected_piece = piece
-                        print(f"Selected piece {repr(piece)}")
                         valid_squares = game.current_position.legal_moves_.get(piece, set())
                         if not valid_squares:
                             print(f"{repr(selected_piece)} cannot move")
                             selected_piece = None
                             continue
-                        print(f"Available squares {valid_squares}")
                         needs_redraw = True
                 else:
                     # Second click: try to make a move
-                    print("Second click")
                     if clicked_square in valid_squares:
                         to_square = clicked_square
                         move = Move(game.current_position, selected_piece, to_square)
                         game.apply_move(move)
+                        if not game.result:
+                            print(f"Now it's {game.current_position.whose_move}'s turn")
 
                         # Update boardview with new position
                         boardview = BoardView(game.current_position, screen)
@@ -87,10 +85,7 @@ while running:
         boardview.draw(screen, highlights=valid_squares)
         pygame.display.flip()
         needs_redraw = False
-        if game.result is not None:
-            game_over = True
-        else:
-            print(f"Now it's {game.current_position.whose_move}'s turn")
+
     clock.tick(60)
 
 pygame.quit()

@@ -11,7 +11,7 @@ from src.models import utils
 class Position:
     def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str = None):
         self.whose_move = whose_move
-        self.not_turn_to_move = "black" if self.whose_move == "white" else "black"
+        self.not_turn_to_move = "black" if self.whose_move == "white" else "white"
         # TO DO : Implement castling rights
         # TO DO : Implement en_passant (last piece_who_moved)
 
@@ -98,9 +98,9 @@ class Position:
                 else:
                     intercepting_squares = set()
             elif first_piece.color == king.color:
-                squareset2, second_piece = first_piece.current_square.explore_in_direction(direction)
+                squareset2, second_piece = first_piece.square.explore_in_direction(direction)
                 if second_piece and second_piece.color == king.opposite_color and isinstance(second_piece, RecursiveControlledSquaresMixin) and direction in second_piece.moving_directions():
-                    pinned_pieces_squares_dict[first_piece] = (squareset1 | squareset2) - {first_piece.current_square} if direction in first_piece.moving_directions() else set()
+                    pinned_pieces_squares_dict[first_piece] = (squareset1 | squareset2) - {first_piece.square} if direction in first_piece.moving_directions() else set()
         return checking_pieces, intercepting_squares, pinned_pieces_squares_dict
 
     def compute_legal_moves(self):
@@ -122,7 +122,7 @@ class Position:
             if category == "double check":
                 legal_moves[piece] = set()
                 continue
-            restricted_squares = pinned_pieces[piece] if piece in pinned_pieces.keys() else piece.controlled_squares()
+            restricted_squares = pinned_pieces[piece] if piece in pinned_pieces.keys() else piece.moving_squares()
             if category == "no check":
                 legal_moves[piece] = restricted_squares
             else:  # category == "simple check" -> Intercepting squares
@@ -223,8 +223,9 @@ class Position:
 
     def make_move(self, move: "Move") -> "Position":
         assert move.is_legal_move(), "Illegal move passed to make_move()"
-        new_position = Position(self.pieces, self.not_turn_to_move)
+        new_position = Position(self.pieces, whose_move=self.not_turn_to_move)
         new_position.remove_piece(move.departure_square.name)
+        new_position.remove_piece(move.target_square.name)
         new_position.place_piece(move.piece.color, move.piece.type, move.target_square.name)
         return new_position
 

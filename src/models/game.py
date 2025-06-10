@@ -4,7 +4,7 @@ from src.models import utils
 
 class Game:
     def __init__(self):
-        self.current_position: "Position" = Position(utils.starting_position())
+        self.current_position: "Position" = Position(utils.starting_position(), whose_move="white")
         self.positions_history : list["Position"] = [self.current_position]
         self.moves_history : list["Move"] = []
 

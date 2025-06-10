@@ -1,4 +1,4 @@
-from src.models.board import Piece
+from src.models.pieces import Piece
 import pygame
 from pathlib import Path
 
@@ -9,7 +9,7 @@ class PieceView:
         self.image = pygame.image.load(image_path).convert_alpha()
 
     def draw(self, screen, x, y, square_width, square_height, offset_x = 0, offset_y = 0):
-        if self.piece.current_square:
+        if self.piece.square:
             width = square_width - 2 * offset_x
             height = square_height - 2 * offset_y
             image_scaled = pygame.transform.scale(self.image, (width, height))

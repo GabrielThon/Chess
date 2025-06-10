@@ -55,7 +55,7 @@ class RecursiveControlledSquaresMixin:
         controlled_squares: set["Square"] = set()
         directions = self.moving_directions()
         for direction in directions:
-            controlled_squares = controlled_squares | self.current_square.explore_in_direction(direction)[0]
+            controlled_squares = controlled_squares | self.square.explore_in_direction(direction)[0]
         return controlled_squares
 
 

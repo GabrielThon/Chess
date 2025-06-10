@@ -8,7 +8,7 @@ from . import utils, exceptions
 from .directions import Direction
 
 if TYPE_CHECKING:
-    from .board import Square
+    from .square import Square
 
 
 class Piece(ABC):
@@ -18,14 +18,25 @@ class Piece(ABC):
         self.color = color.lower()
         self.opposite_color = "black" if self.color == "white" else "white"
         self.type = type
-        self.current_square = square
+        self.square = square
         self.image_path = Path().resolve() / "images" / (self.type + "_" + self.color + ".svg")
 
+    @property
+    def string_initial(self):
+        return self.type[0]
+
     def __repr__(self):
-        return f"{self.color.capitalize()} {self.type} on {self.current_square.name}"
+        return f"{self.color.capitalize()} {self.type} on {self.square.name}"
 
     def __str__(self):
-        return f"{self.color.capitalize()} {self.type} on {self.current_square.name}"
+        return f"{self.string_initial}{self.color[0]}"
+
+    def clone(self):
+        return Piece(color=self.color, type=self.type, square=self.square)
+
+    @abstractmethod
+    def moving_directions(self) -> list[tuple[int, int]]:
+        pass
 
     @abstractmethod
     def controlled_squares(self) -> set[Square]:
@@ -37,13 +48,9 @@ class Piece(ABC):
             if not square.piece or square.piece.color == self.opposite_color
         }
 
-    @abstractmethod
-    def moving_directions(self) -> list[tuple[int, int]]:
-        pass
-
 
 class RecursiveControlledSquaresMixin:
-    # Inheriting classes must implement attribute current_square and method moving_directions
+    # Inheriting classes must implement attribute square and method moving_directions
     def controlled_squares(self) -> set[Square]:
         controlled_squares: set["Square"] = set()
         directions = self.moving_directions()
@@ -64,19 +71,19 @@ class Pawn(Piece):
         directions = self.capturing_directions()
 
         for direction in directions:
-            square = self.current_square.next_square_in_direction(direction)
+            square = self.square.next_square_in_direction(direction)
             if square:
                 controlled_squares.add(square)
         return controlled_squares
 
     def moving_squares(self) -> set[Square]:
         # TO DO : prise en passant. Required : move and last_piece to move
-        column, row = utils.label_to_indices(self.current_square.name)
+        column, row = utils.label_to_indices(self.square.name)
         moving_squares = set()
         moving_direction = next(iter(self.moving_directions()))
 
         # Checking moving forward
-        square = self.current_square.next_square_in_direction(moving_direction)
+        square = self.square.next_square_in_direction(moving_direction)
         if square and not square.piece:
             moving_squares.add(square)
             if row == self.starting_row:  # If the pawn is on its starting square, check if it can moves two moving_squares ahead
@@ -97,16 +104,19 @@ class Pawn(Piece):
         moving_direction = 1 if self.color == "white" else -1
         return {Direction(1, moving_direction), Direction(-1, moving_direction)}
 
-
 class Knight(Piece):
     def __init__(self, color: str):
         super().__init__(color.lower(), "Knight")
+
+    @property
+    def string_initial(self):
+        return "N"
 
     def controlled_squares(self) -> set["Square"]:
         controlled_squares = set()
         directions = self.moving_directions()
         for direction in directions:
-            square = self.current_square.next_square_in_direction(direction)
+            square = self.square.next_square_in_direction(direction)
             if square:
                 controlled_squares.add(square)
         return controlled_squares
@@ -147,7 +157,7 @@ class King(Piece):
         controlled_squares = set()
         directions = self.moving_directions()
         for direction in directions:
-            square = self.current_square.next_square_in_direction(direction)
+            square = self.square.next_square_in_direction(direction)
             if square:
                 controlled_squares.add(square)
         return controlled_squares

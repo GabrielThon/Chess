@@ -1,15 +1,11 @@
 import pytest
-from src.models.board import Board
+from src.models.position import Position
+from src.models import utils
 
 
 @pytest.fixture
-def fullboard():
-    board = Board()
+def starting_position():
+    board = Position(utils.starting_position())
     return board
 
-
-@pytest.fixture
-def emptyboard():
-    board = Board(empty=True)
-    return board
 

@@ -26,10 +26,13 @@ class Piece(ABC):
         return self.type[0]
 
     def __repr__(self):
-        return f"{self.color.capitalize()} {self.type} on {self.square.name}"
+        return f"{self.color.capitalize()} {self.type} on {repr(self.square)}"
 
     def __str__(self):
         return f"{self.string_initial}{self.color[0]}"
+
+    def __hash__(self):
+        return hash(self.square)
 
     def clone(self):
         return Piece(color=self.color, type=self.type, square=self.square)

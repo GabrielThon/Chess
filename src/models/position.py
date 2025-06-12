@@ -190,8 +190,8 @@ class Position:
                 legal_moves[piece] = set()
             # Checking en passant
             if self.en_passant_target and isinstance(piece, Pawn):
-                #Keys : direction to check where the pawn previously pushed is
-                #Values : dict with direction to move for capture depending on color
+                # Keys : direction to check where the pawn previously pushed is
+                # Values : dict with direction to move for capture depending on color
                 en_passant_directions = {Direction(-1, 0):
                                              {"white": Direction(-1, 1),
                                               "black": Direction(-1, -1)
@@ -203,7 +203,7 @@ class Position:
                                          }
                 for pawn_check_direction, capture_direction_dict in en_passant_directions.items():
                     potential_captured_pawn_square = piece.square.next_square_in_direction(pawn_check_direction)
-                    if potential_captured_pawn_square and potential_captured_pawn_square.name == self.en_passant_target.square.name:
+                    if potential_captured_pawn_square and potential_captured_pawn_square == self.en_passant_target.square:
                         legal_moves[piece].add(Move(self, piece, piece.square.next_square_in_direction(capture_direction_dict[piece.color]), is_en_passant=True))
 
             for square in accessible_squares:
@@ -266,17 +266,27 @@ class Position:
                 raise KeyError(f"Unsupported piece type(s): {set(pieces_input[color].keys()) - piece_types}")
             for piece_type, piece_set in pieces_input[color].items():
                 for piece in piece_set:
-                    self.place_piece(piece.color, piece.type, piece.square.name)
+                    self.place_piece(piece.color, piece.type, piece.square)
 
-    def place_piece(self, color: str, piece_type: str, square_string: "Square") -> "Piece":
-        piece = self.square_by_name[square_string].place(color, piece_type)
+    def place_piece(self, color: str, piece_type: str, square: str | Square) -> Piece:
+        if isinstance(square, str):
+            square = self.square_by_name[square]
+        elif isinstance(square, Square):
+            square = self.square_by_name[square.name]
+        assert isinstance(square, Square), "Wrong argument type passed in Position.place_piece()"
+        piece = square.place(color, piece_type)
         self.pieces[color][piece_type].add(piece)
         self.legal_moves_ = None
         return piece
 
-    def remove_piece(self, square_string):
+    def remove_piece(self, square: str | Square):
+        if isinstance(square, str):
+            square = self.square_by_name[square]
+        elif isinstance(square, Square):
+            square = self.square_by_name[square.name]
+        assert isinstance(square, Square), "Wrong argument type passed in Position.remove_piece()"
         self.legal_moves_ = None
-        return self.square(square_string).remove_piece()
+        return square.remove_piece()
 
     def square(self, key: str | list | tuple) -> Optional["Square"]:
         # Returns None if the label or indices point at a square not in the grid.
@@ -310,16 +320,16 @@ class Position:
         ###Castling rights update
         updated_castling_rights = self._update_castling_rights(move)
         new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
-        new_position.remove_piece(move.start_square.name)
-        new_position.remove_piece(move.end_square.name)
-        piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square.name)
+        new_position.remove_piece(move.start_square)
+        new_position.remove_piece(move.end_square)
+        piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square)
         if move.is_castling:
-            new_position.remove_piece(move.rook_start.name)
-            new_position.place_piece(move.piece.color, "Rook", move.rook_end.name)
+            new_position.remove_piece(move.rook_start)
+            new_position.place_piece(move.piece.color, "Rook", move.rook_end)
         if move.is_two_pawn_move:
             new_position.en_passant_target = piece
         if move.is_en_passant:
-            new_position.remove_piece(self.en_passant_target.square.name)
+            new_position.remove_piece(self.en_passant_target.square)
         return new_position
 
     def _update_castling_rights(self, move: "Move") -> dict:

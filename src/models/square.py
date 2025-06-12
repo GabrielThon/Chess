@@ -25,7 +25,12 @@ class Square:
         return self.name
 
     def __eq__(self, other):
-        return self.name == other.name
+        if isinstance(other, Square):
+            return self.name == other.name
+        return False
+
+    def __hash__(self):
+        return hash(self.name)
 
     def place(self, color_string, piece_string) -> "pieces.Piece":
         piece_string_to_cls = {

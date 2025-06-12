@@ -143,22 +143,27 @@ class Position:
             category = "double check"
         for piece in (p for s in self.pieces[self.whose_move].values() for p in s):
             if isinstance(piece, King):
-                controlled_squares = self._controlled_squares(piece.opposite_color)
-                accessible_squares = piece.moving_squares() - controlled_squares
+                opposite_color_controlled_squares = self._controlled_squares(piece.opposite_color)
+                accessible_squares = piece.moving_squares() - opposite_color_controlled_squares
                 if accessible_squares:
                     legal_moves[piece] = set()
                 for square in accessible_squares:
                     legal_moves[piece].add(Move(self, piece, square))
                 # Castling moves
+                # Rule 1 : Can only be performed if the king is not in check
+                if self.king_in_check(piece):
+                    continue
                 castling_rows = {"white": "1", "black": "8"}
                 rank = castling_rows[piece.color]
+                # Rule 2 : king and rook have to be on their starting squares and not have moved
                 if self.castling_rights.get(f"{piece.color}_kingside"):
                     square_f_file = self.square(f"f{rank}")
                     square_g_file = self.square(f"g{rank}")
                     square_h_file = self.square(f"h{rank}")
+                    # Rule 3 : Squares on the path have to be empty and not controlled by opposite color pieces
                     if (
                             not any(square.piece for square in [square_f_file, square_g_file]) and
-                            not any(square in controlled_squares for square in [square_f_file, square_g_file])
+                            not any(square in opposite_color_controlled_squares for square in [square_f_file, square_g_file])
                     ):
                         legal_moves[piece].add(Move(self, piece, square_g_file, is_castling=True, rook_start=square_h_file, rook_end=square_f_file))
                 if self.castling_rights.get(f"{piece.color}_queenside"):
@@ -168,7 +173,7 @@ class Position:
                     square_d_file = self.square(f"d{rank}")
                     if (
                             not any(square.piece for square in [square_b_file, square_c_file, square_d_file]) and
-                            not any(square in controlled_squares for square in [square_b_file, square_c_file, square_d_file])
+                            not any(square in opposite_color_controlled_squares for square in [square_b_file, square_c_file, square_d_file])
                     ):
                         legal_moves[piece].add(Move(self, piece, square_c_file, is_castling=True, rook_start=square_a_file, rook_end=square_d_file))
                 continue

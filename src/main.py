@@ -42,8 +42,9 @@ while running:
                     # First click: try to select a piece
                     if piece and piece.color == game.current_position.whose_move:
                         selected_piece = piece
-                        valid_squares = game.current_position.legal_moves_.get(piece, set())
-                        if not valid_squares:
+                        valid_moves = game.current_position.legal_moves_.get(piece, set())
+                        valid_squares = {valid_move.end_square for valid_move in valid_moves}
+                        if not valid_moves:
                             print(f"{repr(selected_piece)} cannot move")
                             selected_piece = None
                             continue
@@ -51,8 +52,8 @@ while running:
                 else:
                     # Second click: try to make a move
                     if clicked_square in valid_squares:
-                        to_square = clicked_square
-                        move = Move(game.current_position, selected_piece, to_square)
+                        valid_moves = game.current_position.legal_moves_.get(selected_piece, set())
+                        move = next(iter({valid_move for valid_move in valid_moves if valid_move.end_square == clicked_square}))
                         game.apply_move(move)
                         if not game.result:
                             print(f"Now it's {game.current_position.whose_move}'s turn")

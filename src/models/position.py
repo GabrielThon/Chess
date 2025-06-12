@@ -9,10 +9,15 @@ from src.models import utils
 
 # State of the board
 class Position:
-    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str = None):
+    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str, castling_rights: dict[str, bool] = None):
         self.whose_move = whose_move
         self.not_turn_to_move = "black" if self.whose_move == "white" else "white"
-        # TO DO : Implement castling rights
+        self.castling_rights = castling_rights or {
+            "white_kingside": True,
+            "white_queenside": True,
+            "black_kingside": True,
+            "black_queenside": True
+        }
         # TO DO : Implement en_passant (last piece_who_moved)
 
         # Construct squares
@@ -29,13 +34,14 @@ class Position:
         else:
             raise ValueError("Invalid input type for Position. Expected List[List[str]] or Dict[str, Dict[str, Set[Piece]]]")
 
-        self.legal_moves_ = None
+        self.legal_moves_: dict["Piece", set["Move"]] = None
 
     def __str__(self):
+        columns, rows = utils.generate_columns_rows()
         board_string = " ——" * 8 + "\n"
-        for row in reversed(self.rows):
+        for row in reversed(rows):
             board_string += "|"
-            for column in self.columns:
+            for column in columns:
                 board_string += str(self.square(column + row)) + "|"
             board_string += "\n" + " ——" * 8 + "\n"
         return board_string
@@ -117,16 +123,46 @@ class Position:
         for piece in (p for s in self.pieces[self.whose_move].values() for p in s):
             if isinstance(piece, King):
                 controlled_squares = self._controlled_squares(piece.opposite_color)
-                legal_moves[piece] = piece.moving_squares() - controlled_squares
+                accessible_squares = piece.moving_squares() - controlled_squares
+                if accessible_squares:
+                    legal_moves[piece] = set()
+                for square in accessible_squares:
+                    legal_moves[piece].add(Move(self, piece, square))
+                # Castling moves
+                castling_rows = {"white": "1", "black": "8"}
+                rank = castling_rows[piece.color]
+                if self.castling_rights.get(f"{piece.color}_kingside"):
+                    square_f_file = self.square(f"f{rank}")
+                    square_g_file = self.square(f"g{rank}")
+                    square_h_file = self.square(f"h{rank}")
+                    if (
+                            not any(square.piece for square in [square_f_file, square_g_file]) and
+                            not any(square in controlled_squares for square in [square_f_file, square_g_file])
+                    ):
+                        legal_moves[piece].add(Move(self, piece, square_g_file, is_castling=True, rook_start=square_h_file, rook_end=square_f_file))
+                if self.castling_rights.get(f"{piece.color}_queenside"):
+                    square_a_file = self.square(f"a{rank}")
+                    square_b_file = self.square(f"b{rank}")
+                    square_c_file = self.square(f"c{rank}")
+                    square_d_file = self.square(f"d{rank}")
+                    if (
+                            not any(square.piece for square in [square_b_file, square_c_file, square_d_file]) and
+                            not any(square in controlled_squares for square in [square_b_file, square_c_file, square_d_file])
+                    ):
+                        legal_moves[piece].add(Move(self, piece, square_c_file, is_castling=True, rook_start=square_a_file, rook_end=square_d_file))
                 continue
             if category == "double check":
                 legal_moves[piece] = set()
                 continue
             restricted_squares = pinned_pieces[piece] if piece in pinned_pieces.keys() else piece.moving_squares()
             if category == "no check":
-                legal_moves[piece] = restricted_squares
+                accessible_squares = restricted_squares
             else:  # category == "simple check" -> Intercepting squares
-                legal_moves[piece] = restricted_squares & intercepting_squares
+                accessible_squares = restricted_squares & intercepting_squares
+            if accessible_squares:
+                legal_moves[piece] = set()
+            for square in accessible_squares:
+                legal_moves[piece].add(Move(self, piece, square))
         self.legal_moves_ = legal_moves
 
     def _build_squares(self) -> tuple[dict[str, "Square"], list[list["Square"]]]:
@@ -182,7 +218,6 @@ class Position:
                 for piece in piece_set:
                     self.place_piece(piece.color, piece.type, piece.square.name)
 
-
     def place_piece(self, color: str, piece_type: str, square_string: "Square") -> "Piece":
         piece = self.square_by_name[square_string].place(color, piece_type)
         self.pieces[color][piece_type].add(piece)
@@ -192,7 +227,6 @@ class Position:
     def remove_piece(self, square_string):
         self.legal_moves_ = None
         return self.square(square_string).remove_piece()
-
 
     def square(self, key: str | list | tuple) -> Optional["Square"]:
         # Returns None if the label or indices point at a square not in the grid.
@@ -223,14 +257,32 @@ class Position:
 
     def make_move(self, move: "Move") -> "Position":
         assert move.is_legal_move(), "Illegal move passed to make_move()"
-        new_position = Position(self.pieces, whose_move=self.not_turn_to_move)
-        new_position.remove_piece(move.departure_square.name)
-        new_position.remove_piece(move.target_square.name)
-        new_position.place_piece(move.piece.color, move.piece.type, move.target_square.name)
+        ###Castling rights update
+        updated_castling_rights = self.castling_rights
+        #If the king moves, both kingside and queenside castles are disabled for the corresponding color
+        if move.piece.type == "King":
+            updated_castling_rights[f"{move.piece.color}_kingside"] = False
+            updated_castling_rights[f"{move.piece.color}_queenside"] = False
+        #If a rook moves from its starting square, corresponding castle is disable
+        starting_rook_squares = {"h1": "white_kingside",
+                                 "a1": "white_queenside",
+                                 "h8": "black_kingside",
+                                 "a8": "black_queenside"}
+        if move.piece.type == "Rook" and move.start_square.name in starting_rook_squares.keys():
+            updated_castling_rights[starting_rook_squares[move.start_square.name]] = False
+        #If a piece ends its turn in one of the rook starting squares, it might be a capture, so we disable corresponding castling.
+        #If the castling was already disable, this operation will do nothing, so we don't have to worry about other cases
+        if move.end_square.name in starting_rook_squares.keys():
+            updated_castling_rights[starting_rook_squares[move.end_square.name]] = False
+
+        new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
+        new_position.remove_piece(move.start_square.name)
+        new_position.remove_piece(move.end_square.name)
+        new_position.place_piece(move.piece.color, move.piece.type, move.end_square.name)
+        if move.is_castling:
+            new_position.remove_piece(move.rook_start.name)
+            new_position.place_piece(move.piece.color, "Rook", move.rook_end.name)
         return new_position
-
-
-
 
 ##    Doesn't belong here : maybe at the Game level
 #     def _initial_position(self):

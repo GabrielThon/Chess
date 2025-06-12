@@ -3,14 +3,14 @@ from typing import Optional
 from src.models.directions import Direction
 from src.models.move import Move
 from src.models.square import Square
-from src.models.pieces import Piece, King, RecursiveControlledSquaresMixin
+from src.models.pieces import Piece, King, RecursiveControlledSquaresMixin, Pawn
 from src.models import exceptions
 from src.models import utils
 
 
 # State of the board
 class Position:
-    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str, castling_rights: dict[str, bool] = None):
+    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str, castling_rights: dict[str, bool] = None, en_passant_target=None):
         self.whose_move = whose_move
         self.not_turn_to_move = "black" if self.whose_move == "white" else "white"
         self.castling_rights = castling_rights or {
@@ -19,6 +19,7 @@ class Position:
             "black_kingside": True,
             "black_queenside": True
         }
+        self.en_passant_target: "Piece" = en_passant_target
         # TO DO : Implement en_passant (last piece_who_moved)
 
         # Construct squares
@@ -94,27 +95,27 @@ class Position:
         checking_pieces = set()
         intercepting_squares = None
         king = next(iter(self.pieces[self.whose_move]["King"]))
-        #Handling of Bishop, Rook, Queen checks and pins
+        # Handling of Bishop, Rook, Queen checks and pins
         for direction in Direction.diagonals() | Direction.straights():
             squareset1, first_piece = king.square.explore_in_direction(direction)
             if not first_piece:
                 continue
-            #Checks
+            # Checks
             if first_piece.color == king.opposite_color and isinstance(first_piece, RecursiveControlledSquaresMixin) and direction in first_piece.moving_directions():
                 checking_pieces.add(first_piece)
                 intercepting_squares = squareset1
-            #Pins
+            # Pins
             elif first_piece.color == king.color:
                 squareset2, second_piece = first_piece.square.explore_in_direction(direction)
                 if second_piece and second_piece.color == king.opposite_color and isinstance(second_piece, RecursiveControlledSquaresMixin) and direction in second_piece.moving_directions():
                     pinned_pieces_squares_dict[first_piece] = (squareset1 | squareset2) - {first_piece.square} if direction in first_piece.moving_directions() else set()
-        #Handling of knight checks
+        # Handling of knight checks
         for direction in Direction.knight_jumps():
             square = king.square.next_square_in_direction(direction)
             if square and square.piece and square.piece.type == "Knight" and square.piece.color == king.opposite_color:
                 checking_pieces.add(square.piece)
                 intercepting_squares = {square}
-        #Handling of pawn checks
+        # Handling of pawn checks
         pawn_checking_directions = {"white": {Direction(1, -1), Direction(1, 1)},
                                     "black": {Direction(-1, -1), Direction(-1, 1)}
                                     }
@@ -124,7 +125,7 @@ class Position:
                 checking_pieces.add(square.piece)
                 intercepting_squares = {square}
 
-        #In case of double check, interception is not possible
+        # In case of double check, interception is not possible
         if len(checking_pieces) > 1:
             intercepting_squares = None
 
@@ -187,8 +188,31 @@ class Position:
                 accessible_squares = restricted_squares & intercepting_squares
             if accessible_squares:
                 legal_moves[piece] = set()
+            # Checking en passant
+            if self.en_passant_target and isinstance(piece, Pawn):
+                #Keys : direction to check where the pawn previously pushed is
+                #Values : dict with direction to move for capture depending on color
+                en_passant_directions = {Direction(-1, 0):
+                                             {"white": Direction(-1, 1),
+                                              "black": Direction(-1, -1)
+                                              },
+                                         Direction(1, 0):
+                                             {"white": Direction(1, 1),
+                                              "black": Direction(1, -1)
+                                              }
+                                         }
+                for pawn_check_direction, capture_direction_dict in en_passant_directions.items():
+                    potential_captured_pawn_square = piece.square.next_square_in_direction(pawn_check_direction)
+                    if potential_captured_pawn_square and potential_captured_pawn_square.name == self.en_passant_target.square.name:
+                        legal_moves[piece].add(Move(self, piece, piece.square.next_square_in_direction(capture_direction_dict[piece.color]), is_en_passant=True))
+
             for square in accessible_squares:
-                legal_moves[piece].add(Move(self, piece, square))
+                move = Move(self, piece, square)
+                # Records two-pawn advances for en passant
+                if piece.type == "Pawn" and abs(move.start_square.row - move.end_square.row) == 2:
+                    move.is_two_pawn_move = True
+                legal_moves[piece].add(move)
+
         self.legal_moves_ = legal_moves
 
     def _build_squares(self) -> tuple[dict[str, "Square"], list[list["Square"]]]:
@@ -288,10 +312,14 @@ class Position:
         new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
         new_position.remove_piece(move.start_square.name)
         new_position.remove_piece(move.end_square.name)
-        new_position.place_piece(move.piece.color, move.piece.type, move.end_square.name)
+        piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square.name)
         if move.is_castling:
             new_position.remove_piece(move.rook_start.name)
             new_position.place_piece(move.piece.color, "Rook", move.rook_end.name)
+        if move.is_two_pawn_move:
+            new_position.en_passant_target = piece
+        if move.is_en_passant:
+            new_position.remove_piece(self.en_passant_target.square.name)
         return new_position
 
     def _update_castling_rights(self, move: "Move") -> dict:
@@ -300,14 +328,14 @@ class Position:
                                  "a1": "white_queenside",
                                  "h8": "black_kingside",
                                  "a8": "black_queenside"}
-        #Rule 1 : King moves, both kingside and queenside castles are disabled for the corresponding color
+        # Rule 1 : King moves, both kingside and queenside castles are disabled for the corresponding color
         if move.piece.type == "King":
             updated_castling_rights[f"{move.piece.color}_kingside"] = False
             updated_castling_rights[f"{move.piece.color}_queenside"] = False
-        #Rule 2 : Rook moves from its starting square, corresponding castle is disabled
+        # Rule 2 : Rook moves from its starting square, corresponding castle is disabled
         if move.piece.type == "Rook" and move.start_square.name in starting_rook_squares.keys():
             updated_castling_rights[starting_rook_squares[move.start_square.name]] = False
-        #Rule 3 : Any piece ends its turn on one of the rook starting squares, corresponding castle is disabled
+        # Rule 3 : Any piece ends its turn on one of the rook starting squares, corresponding castle is disabled
         if move.end_square.name in starting_rook_squares.keys():
             updated_castling_rights[starting_rook_squares[move.end_square.name]] = False
         return updated_castling_rights

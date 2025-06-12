@@ -24,6 +24,9 @@ class Square:
     def __repr__(self):
         return self.name
 
+    def __eq__(self, other):
+        return self.name == other.name
+
     def place(self, color_string, piece_string) -> "pieces.Piece":
         piece_string_to_cls = {
             name: cls

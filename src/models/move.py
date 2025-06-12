@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class Move:
-    def __init__(self, position: "Position", piece: "Piece", square: "Square", *, is_castling = False, rook_start = None, rook_end = None):
+    def __init__(self, position: "Position", piece: "Piece", square: "Square", *, is_castling = False, rook_start = None, rook_end = None, is_two_pawn_move = False, is_en_passant = False):
         self.former_position = position
         self.piece = piece
         self.start_square = piece.square
@@ -15,6 +15,9 @@ class Move:
         self.is_castling = is_castling
         self.rook_start = rook_start
         self.rook_end = rook_end
+        self.is_two_pawn_move = is_two_pawn_move
+        self.is_en_passant = is_en_passant
+
 
     def __eq__(self, other):
         if not isinstance(other, Move):

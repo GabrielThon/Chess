@@ -1,5 +1,6 @@
 from typing import Optional
 
+from src.models.directions import Direction
 from src.models.move import Move
 from src.models.square import Square
 from src.models.pieces import Piece, King, RecursiveControlledSquaresMixin
@@ -91,22 +92,42 @@ class Position:
     def _explore_checks_and_pins(self) -> [set["Piece"], set["Square"], dict["Piece", set["Square"]]]:
         pinned_pieces_squares_dict = {}
         checking_pieces = set()
-        intercepting_squares = set()
+        intercepting_squares = None
         king = next(iter(self.pieces[self.whose_move]["King"]))
-        for direction in king.moving_directions():
+        #Handling of Bishop, Rook, Queen checks and pins
+        for direction in Direction.diagonals() | Direction.straights():
             squareset1, first_piece = king.square.explore_in_direction(direction)
             if not first_piece:
                 continue
+            #Checks
             if first_piece.color == king.opposite_color and isinstance(first_piece, RecursiveControlledSquaresMixin) and direction in first_piece.moving_directions():
                 checking_pieces.add(first_piece)
-                if len(checking_pieces) == 1:
-                    intercepting_squares = squareset1
-                else:
-                    intercepting_squares = set()
+                intercepting_squares = squareset1
+            #Pins
             elif first_piece.color == king.color:
                 squareset2, second_piece = first_piece.square.explore_in_direction(direction)
                 if second_piece and second_piece.color == king.opposite_color and isinstance(second_piece, RecursiveControlledSquaresMixin) and direction in second_piece.moving_directions():
                     pinned_pieces_squares_dict[first_piece] = (squareset1 | squareset2) - {first_piece.square} if direction in first_piece.moving_directions() else set()
+        #Handling of knight checks
+        for direction in Direction.knight_jumps():
+            square = king.square.next_square_in_direction(direction)
+            if square and square.piece and square.piece.type == "Knight" and square.piece.color == king.opposite_color:
+                checking_pieces.add(square.piece)
+                intercepting_squares = {square}
+        #Handling of pawn checks
+        pawn_checking_directions = {"white": {Direction(1, -1), Direction(1, 1)},
+                                    "black": {Direction(-1, -1), Direction(-1, 1)}
+                                    }
+        for direction in pawn_checking_directions[king.color]:
+            square = king.square.next_square_in_direction(direction)
+            if square and square.piece and square.piece.type == "Pawn" and square.piece.color == king.opposite_color:
+                checking_pieces.add(square.piece)
+                intercepting_squares = {square}
+
+        #In case of double check, interception is not possible
+        if len(checking_pieces) > 1:
+            intercepting_squares = None
+
         return checking_pieces, intercepting_squares, pinned_pieces_squares_dict
 
     def compute_legal_moves(self):
@@ -258,23 +279,7 @@ class Position:
     def make_move(self, move: "Move") -> "Position":
         assert move.is_legal_move(), "Illegal move passed to make_move()"
         ###Castling rights update
-        updated_castling_rights = self.castling_rights
-        #If the king moves, both kingside and queenside castles are disabled for the corresponding color
-        if move.piece.type == "King":
-            updated_castling_rights[f"{move.piece.color}_kingside"] = False
-            updated_castling_rights[f"{move.piece.color}_queenside"] = False
-        #If a rook moves from its starting square, corresponding castle is disable
-        starting_rook_squares = {"h1": "white_kingside",
-                                 "a1": "white_queenside",
-                                 "h8": "black_kingside",
-                                 "a8": "black_queenside"}
-        if move.piece.type == "Rook" and move.start_square.name in starting_rook_squares.keys():
-            updated_castling_rights[starting_rook_squares[move.start_square.name]] = False
-        #If a piece ends its turn in one of the rook starting squares, it might be a capture, so we disable corresponding castling.
-        #If the castling was already disable, this operation will do nothing, so we don't have to worry about other cases
-        if move.end_square.name in starting_rook_squares.keys():
-            updated_castling_rights[starting_rook_squares[move.end_square.name]] = False
-
+        updated_castling_rights = self._update_castling_rights(move)
         new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
         new_position.remove_piece(move.start_square.name)
         new_position.remove_piece(move.end_square.name)
@@ -284,7 +289,20 @@ class Position:
             new_position.place_piece(move.piece.color, "Rook", move.rook_end.name)
         return new_position
 
-##    Doesn't belong here : maybe at the Game level
-#     def _initial_position(self):
-#         for [color, piece, square] in utils.starting_position():
-#             self.place_piece(color, piece, square)
+    def _update_castling_rights(self, move: "Move") -> dict:
+        updated_castling_rights = self.castling_rights.copy()
+        starting_rook_squares = {"h1": "white_kingside",
+                                 "a1": "white_queenside",
+                                 "h8": "black_kingside",
+                                 "a8": "black_queenside"}
+        #Rule 1 : King moves, both kingside and queenside castles are disabled for the corresponding color
+        if move.piece.type == "King":
+            updated_castling_rights[f"{move.piece.color}_kingside"] = False
+            updated_castling_rights[f"{move.piece.color}_queenside"] = False
+        #Rule 2 : Rook moves from its starting square, corresponding castle is disabled
+        if move.piece.type == "Rook" and move.start_square.name in starting_rook_squares.keys():
+            updated_castling_rights[starting_rook_squares[move.start_square.name]] = False
+        #Rule 3 : Any piece ends its turn on one of the rook starting squares, corresponding castle is disabled
+        if move.end_square.name in starting_rook_squares.keys():
+            updated_castling_rights[starting_rook_squares[move.end_square.name]] = False
+        return updated_castling_rights

@@ -18,7 +18,7 @@ def test_valid_square_attribute_access(emptyboard):
         for row in emptyboard.rows:
             square = emptyboard.square(column + row)
             assert square.name == column + row
-            assert square.board == emptyboard
+            assert square.position == emptyboard
             assert square.piece is None
 
 def test_board_place(emptyboard):

@@ -54,7 +54,7 @@ class Square:
         if not self.piece:
             return False
         piece = self.piece
-        # Removes piece from the board corresponding color piece collection
+        # Removes piece from the position corresponding color piece collection
         self.position.pieces[piece.color][piece.type].remove(piece)
         # Removes link between piece and square
         piece.square = None

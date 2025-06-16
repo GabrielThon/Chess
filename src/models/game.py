@@ -18,6 +18,10 @@ class Game:
         self.positions_history.append(new_position)
         self.current_position = new_position
         self._check_game_end_conditions()
+        #Replace + by # in notation if it's a mate
+        if self.result and "Checkmate" in self.result:
+            move.notation = move.notation[:-1] + "#"
+        print(move.notation)
         return True
 
     def _check_game_end_conditions(self):

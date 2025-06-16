@@ -8,7 +8,7 @@ from src.models import exceptions
 from src.models import utils
 
 
-# State of the board
+# State of the position
 class Position:
     def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str, castling_rights: dict[str, bool] = None, en_passant_target=None):
         self.whose_move = whose_move
@@ -131,7 +131,7 @@ class Position:
 
         return checking_pieces, intercepting_squares, pinned_pieces_squares_dict
 
-    def compute_legal_moves(self):
+    def compute_legal_moves(self) -> dict[Piece, set[Move]]:
         if not self.is_valid_position():
             self.legal_moves_ = {}
         legal_moves = {}
@@ -207,11 +207,15 @@ class Position:
                         legal_moves[piece].add(Move(self, piece, piece.square.next_square_in_direction(capture_direction_dict[piece.color]), is_en_passant=True))
 
             for square in accessible_squares:
-                move = Move(self, piece, square)
                 # Records two-pawn advances for en passant
-                if piece.type == "Pawn" and abs(move.start_square.row - move.end_square.row) == 2:
-                    move.is_two_pawn_move = True
-                legal_moves[piece].add(move)
+                if piece.type == "Pawn" and abs(piece.square.row - square.row) == 2:
+                    legal_moves[piece].add(Move(self, piece, square, is_two_pawn_move=True))
+                # Promotion of pawns
+                elif piece.type == "Pawn" and square.row in [0, 7]:
+                    for string in ["Knight", "Bishop", "Rook", "Queen"]:
+                        legal_moves[piece].add(Move(self, piece, square, is_promotion=True, promoting_piece_str=string))
+                else:
+                    legal_moves[piece].add(Move(self, piece, square))
 
         self.legal_moves_ = legal_moves
 
@@ -320,16 +324,29 @@ class Position:
         ###Castling rights update
         updated_castling_rights = self._update_castling_rights(move)
         new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
+        # Step 1 : Remove the moved piece from its original square
         new_position.remove_piece(move.start_square)
-        new_position.remove_piece(move.end_square)
-        piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square)
+        # Step 2 : Remove captured piece if there is one
+        if move.is_capture():
+            if move.is_en_passant:
+                new_position.remove_piece(self.en_passant_target.square)
+            else:
+                new_position.remove_piece(move.end_square)
+        #Step 3 : Place a new instance of the moved piece on the end square
+        if move.is_promotion:
+            piece = new_position.place_piece(move.piece.color, move.promoting_piece_str, move.end_square)
+        else:
+            piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square)
         if move.is_castling:
             new_position.remove_piece(move.rook_start)
             new_position.place_piece(move.piece.color, "Rook", move.rook_end)
         if move.is_two_pawn_move:
             new_position.en_passant_target = piece
-        if move.is_en_passant:
-            new_position.remove_piece(self.en_passant_target.square)
+
+        move.compute_french_notation()
+        #Append + sign if check identified
+        if new_position.king_in_check(next(iter(new_position.pieces[new_position.whose_move]["King"]))):
+            move.notation += "+"
         return new_position
 
     def _update_castling_rights(self, move: "Move") -> dict:

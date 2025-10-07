@@ -104,8 +104,8 @@ class Move:
 
         if self.is_castling:
             if self.end_square.name in ["g1","g8"]:
-                return "0-0"
-            return "0-0-0"
+                return "O-O"
+            return "O-O-O"
         piece_cls_to_notation = notations.get(language, notations["English"])
         piece_notation = piece_cls_to_notation[self.piece.__class__.__name__]
         target_square_notation = self.end_square.name

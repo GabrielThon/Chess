@@ -1,8 +1,8 @@
 import pytest
 import json
 from pathlib import Path
-from src.chess.models.position import Position
-from src.chess.models import exceptions
+from chess.models.position import Position
+from chess.models import exceptions
 
 POSITIONS_PATH = Path(__file__).parent / "test_position_validity.json"
 positions = json.loads(POSITIONS_PATH.read_text())
@@ -11,10 +11,7 @@ position_ids = [p["name"] for p in positions]
 @pytest.mark.parametrize("scenario", positions, ids=position_ids)
 
 def test_pieces_moving_squares(emptyboard, scenario):
-    for color, piece_type, square in scenario["position"]:
-        emptyboard.place(color, piece_type, square)
-
-    position = Position(emptyboard, scenario["move"])
+    position = Position(scenario["position"], whose_move=scenario["move"])
 
     expected = scenario["result"]
 

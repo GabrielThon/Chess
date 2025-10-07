@@ -1,6 +1,6 @@
 import pygame
-from src.chess.models.game import Game
-from src.chess.views.board_view import BoardView
+from .models.game import Game
+from .views.board_view import BoardView
 
 WINDOW_SIZE = (400,400)
 pygame.init()

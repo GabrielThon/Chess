@@ -1,8 +1,8 @@
 import pytest
 
-from src.chess.models.exceptions import InvalidColorError, UnimplementedPieceTypeError
-from src.chess.models.directions import Direction
-from src.chess.models.position import Position
+from chess.models.exceptions import InvalidColorError, UnimplementedPieceTypeError
+from chess.models.directions import Direction
+from chess.models.position import Position
 
 
 def test_place_valid():

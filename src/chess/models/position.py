@@ -1,16 +1,15 @@
 from typing import Optional
 
-from src.chess.models.directions import Direction
-from src.chess.models.move import Move
-from src.chess.models.square import Square
-from src.chess.models.pieces import Piece, King, RecursiveControlledSquaresMixin, Pawn
-from src.chess.models import exceptions
-from src.chess.models import utils
+from .directions import Direction
+from .move import Move
+from .square import Square
+from .pieces import Piece, King, RecursiveControlledSquaresMixin, Pawn
+from . import exceptions, utils
 
 
 # State of the position
 class Position:
-    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str, castling_rights: dict[str, bool] = None, en_passant_target=None):
+    def __init__(self, pieces_input: list[list[str]] | dict[str, dict[str, set['Piece']]], whose_move: str = None, castling_rights: dict[str, bool] = None, en_passant_target=None):
         self.whose_move = whose_move
         self.not_turn_to_move = "black" if self.whose_move == "white" else "white"
         self.castling_rights = castling_rights or {

@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
-from src.chess.models.pieces import Queen, Rook, Bishop, Knight
-from src.chess.models.position import Position
+from ..models.pieces import Queen, Rook, Bishop, Knight
+from ..models.position import Position
 import pygame
 
-from src.chess.views.piece_view import PieceView
+from .piece_view import PieceView
 
 if TYPE_CHECKING:
-    from src.chess.models.square import Square
+    from ..models.square import Square
 
 
 class BoardView:

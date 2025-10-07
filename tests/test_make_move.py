@@ -1,5 +1,5 @@
-from src.chess.models.move import Move
-from src.chess.models.position import Position
+from chess.models.move import Move
+from chess.models.position import Position
 
 
 def test_simple_move():

@@ -1,6 +1,6 @@
-from src.chess.models.move import Move
-from src.chess.models.position import Position
-from src.chess.models import utils
+from .move import Move
+from .position import Position
+from . import utils
 
 
 class Game:
@@ -18,8 +18,7 @@ class Game:
             except AssertionError:
                 print("Illegal move attempted!")
                 return False
-
-        if isinstance(move, str):
+        elif isinstance(move, str):
             try:
                 new_position, move = self.current_position.make_move(move, language=language)
             except ValueError:

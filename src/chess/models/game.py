@@ -11,19 +11,36 @@ class Game:
         self.moves_history : list["Move"] = []
         self.result = None
 
-    def apply_move(self, move: Move) -> bool:
-        if not move.is_legal_move():
-            return False
-        new_position = self.current_position.make_move(move)
+    def apply_move(self, move: Move | str, language="English") -> bool:
+        if isinstance(move, Move):
+            try:
+                new_position = self.current_position.make_move(move, language=language)[0]
+            except AssertionError:
+                print("Illegal move attempted!")
+                return False
+
+        if isinstance(move, str):
+            try:
+                new_position, move = self.current_position.make_move(move, language=language)
+            except ValueError:
+                print("Notation doesn't refer to a legal move in the current position")
+                return False
+        else:
+            raise TypeError("move must be a Move or a string")
+
         self.moves_history.append(move)
         self.positions_history.append(new_position)
         self.current_position = new_position
         self._check_game_end_conditions()
-        #Replace + by # in notation if it's a mate
+        #Replace + by # in base_notation if it's a mate
         if self.result and "Checkmate" in self.result:
-            move.notation = move.notation[:-1] + "#"
-        print(move.notation)
+            move.is_checkmate = True
+            move.update_full_notation()
+        print(move.full_notation)
         return True
+
+
+
 
     def _check_game_end_conditions(self):
         position = self.current_position
@@ -37,3 +54,8 @@ class Game:
                 self.result = f"Stalemate !"
             print(self.result)
         #TO DO : repetitions, no push pawn and capture ?
+
+if __name__ == "__main__":
+    game = Game()
+    game.apply_move("Nc3")
+    game.apply_move("Cf6", language="French")

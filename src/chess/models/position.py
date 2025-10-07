@@ -319,35 +319,51 @@ class Position:
                     all_pieces.add(piece)
         return all_pieces
 
-    def make_move(self, move: "Move") -> "Position":
-        assert move.is_legal_move(), "Illegal move passed to make_move()"
-        ###Castling rights update
-        updated_castling_rights = self._update_castling_rights(move)
-        new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
-        # Step 1 : Remove the moved piece from its original square
-        new_position.remove_piece(move.start_square)
-        # Step 2 : Remove captured piece if there is one
-        if move.is_capture():
-            if move.is_en_passant:
-                new_position.remove_piece(self.en_passant_target.square)
+    def make_move(self, move_or_notation: Move | str, language="English") -> tuple["Position", Move]:
+        if isinstance(move_or_notation, Move):
+            assert move_or_notation.is_legal_move(), "Illegal move passed to make_move()"
+            ###Castling rights update
+            updated_castling_rights = self._update_castling_rights(move_or_notation)
+            new_position = Position(self.pieces, whose_move=self.not_turn_to_move, castling_rights=updated_castling_rights)
+            # Step 1 : Remove the moved piece from its original square
+            new_position.remove_piece(move_or_notation.start_square)
+            # Step 2 : Remove captured piece if there is one
+            if move_or_notation.is_capture():
+                if move_or_notation.is_en_passant:
+                    new_position.remove_piece(self.en_passant_target.square)
+                else:
+                    new_position.remove_piece(move_or_notation.end_square)
+            # Step 3 : Place a new instance of the moved piece on the end square
+            if move_or_notation.is_promotion:
+                piece = new_position.place_piece(move_or_notation.piece.color, move_or_notation.promoting_piece_str, move_or_notation.end_square)
             else:
-                new_position.remove_piece(move.end_square)
-        #Step 3 : Place a new instance of the moved piece on the end square
-        if move.is_promotion:
-            piece = new_position.place_piece(move.piece.color, move.promoting_piece_str, move.end_square)
-        else:
-            piece = new_position.place_piece(move.piece.color, move.piece.type, move.end_square)
-        if move.is_castling:
-            new_position.remove_piece(move.rook_start)
-            new_position.place_piece(move.piece.color, "Rook", move.rook_end)
-        if move.is_two_pawn_move:
-            new_position.en_passant_target = piece
+                piece = new_position.place_piece(move_or_notation.piece.color, move_or_notation.piece.type, move_or_notation.end_square)
+            if move_or_notation.is_castling:
+                new_position.remove_piece(move_or_notation.rook_start)
+                new_position.place_piece(move_or_notation.piece.color, "Rook", move_or_notation.rook_end)
+            if move_or_notation.is_two_pawn_move:
+                new_position.en_passant_target = piece
 
-        move.compute_notation()
-        #Append + sign if check identified
-        if new_position.king_in_check(next(iter(new_position.pieces[new_position.whose_move]["King"]))):
-            move.notation += "+"
-        return new_position
+            move_or_notation.base_notation = move_or_notation.compute_base_notation(language=language)
+            # Append + sign if check identified
+            if new_position.king_in_check(next(iter(new_position.pieces[new_position.whose_move]["King"]))):
+                move_or_notation.is_check = True
+            move_or_notation.update_full_notation()
+            return new_position, move_or_notation
+
+        if isinstance(move_or_notation, str):
+            # Normalize incoming notation (remove + or #)
+            normalized_input = move_or_notation.rstrip("+#")
+
+            legal_moves = self.legal_moves_
+
+            for piece, moves in legal_moves.items():
+                for move in moves:
+                    base_notation = move.compute_base_notation(language)
+                    if base_notation == normalized_input:
+                        return self.make_move(move, language)
+
+            raise ValueError(f"No legal move matches notation '{move_or_notation}' in {language}")
 
     def _update_castling_rights(self, move: "Move") -> dict:
         updated_castling_rights = self.castling_rights.copy()

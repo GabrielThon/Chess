@@ -19,7 +19,10 @@ class Move:
         self.is_en_passant = is_en_passant
         self.is_promotion = is_promotion
         self.promoting_piece_str = promoting_piece_str
-        self.notation = None
+        self.base_notation = None
+        self.is_check = None
+        self.is_checkmate = None
+        self.full_notation = None
 
 
     def __eq__(self, other):
@@ -79,7 +82,7 @@ class Move:
         else:
             return "x"
 
-    def compute_notation(self, language="English"):
+    def compute_base_notation(self, language="English"):
         notations = {
             "English": {
                 "Pawn": "",
@@ -109,7 +112,15 @@ class Move:
         capture_notation = self._capture_notation() if self.is_capture() else ""
         mutiple_piece_notation = self._multiple_pieces_notation()
         promotion_notation = "=" + piece_cls_to_notation[self.promoting_piece_str] if self.is_promotion else ""
-        self.notation = piece_notation + mutiple_piece_notation + capture_notation + target_square_notation + promotion_notation
+        return piece_notation + mutiple_piece_notation + capture_notation + target_square_notation + promotion_notation
+
+    def update_full_notation(self):
+        if self.is_checkmate:
+            self.full_notation = self.base_notation + "#"
+        elif self.is_check:
+            self.full_notation = self.base_notation + "+"
+        else:
+            self.full_notation = self.base_notation
 
 if __name__ == "__main__":
     from position import Position
@@ -118,5 +129,5 @@ if __name__ == "__main__":
     start_square = initial_position.square_by_name["b1"]
     end_square = initial_position.square_by_name["c3"]
     move = Move(initial_position, start_square.piece, end_square)
-    move.compute_notation()
-    print(move.notation)
+    move.compute_base_notation()
+    print(move.base_notation)

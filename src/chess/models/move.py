@@ -79,19 +79,31 @@ class Move:
         else:
             return "x"
 
-    def compute_french_notation(self):
+    def compute_notation(self, language="English"):
+        notations = {
+            "English": {
+                "Pawn": "",
+                "Knight": "N",
+                "Bishop": "B",
+                "Rook": "R",
+                "Queen": "Q",
+                "King": "K"
+            },
+            "French": {
+                "Pawn": "",
+                "Knight": "C",
+                "Bishop": "F",
+                "Rook": "T",
+                "Queen": "D",
+                "King": "R"
+            }
+        }
+
         if self.is_castling:
             if self.end_square.name in ["g1","g8"]:
                 return "0-0"
             return "0-0-0"
-        piece_cls_to_notation = {
-            "Pawn" : "",
-            "Knight": "C",
-            "Bishop": "F",
-            "Rook": "T",
-            "Queen": "D",
-            "King": "R"
-        }
+        piece_cls_to_notation = notations.get(language, notations["English"])
         piece_notation = piece_cls_to_notation[self.piece.__class__.__name__]
         target_square_notation = self.end_square.name
         capture_notation = self._capture_notation() if self.is_capture() else ""
@@ -106,5 +118,5 @@ if __name__ == "__main__":
     start_square = initial_position.square_by_name["b1"]
     end_square = initial_position.square_by_name["c3"]
     move = Move(initial_position, start_square.piece, end_square)
-    move.compute_french_notation()
+    move.compute_notation()
     print(move.notation)

@@ -343,7 +343,7 @@ class Position:
         if move.is_two_pawn_move:
             new_position.en_passant_target = piece
 
-        move.compute_french_notation()
+        move.compute_notation()
         #Append + sign if check identified
         if new_position.king_in_check(next(iter(new_position.pieces[new_position.whose_move]["King"]))):
             move.notation += "+"

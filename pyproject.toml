@@ -24,8 +24,12 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["chess*"]
 
 [project.optional-dependencies]
 dev = ["pytest==8.4.2"]

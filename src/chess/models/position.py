@@ -1,11 +1,11 @@
 from typing import Optional
 
-from src.models.directions import Direction
-from src.models.move import Move
-from src.models.square import Square
-from src.models.pieces import Piece, King, RecursiveControlledSquaresMixin, Pawn
-from src.models import exceptions
-from src.models import utils
+from src.chess.models.directions import Direction
+from src.chess.models.move import Move
+from src.chess.models.square import Square
+from src.chess.models.pieces import Piece, King, RecursiveControlledSquaresMixin, Pawn
+from src.chess.models import exceptions
+from src.chess.models import utils
 
 
 # State of the position

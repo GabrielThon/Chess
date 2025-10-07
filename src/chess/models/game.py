@@ -1,6 +1,7 @@
-from src.models.move import Move
-from src.models.position import Position
-from src.models import utils
+from src.chess.models.move import Move
+from src.chess.models.position import Position
+from src.chess.models import utils
+
 
 class Game:
     def __init__(self):

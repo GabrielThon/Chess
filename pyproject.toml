@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chess"
+version = "0.1.0"
+description = "A Python chess move verificator and simple GUI"
+authors = [{ name = "Gabriel Thon" }]
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "colorama==0.4.6",
+    "iniconfig==2.1.0",
+    "packaging==25.0",
+    "pluggy==1.6.0",
+    "pygame==2.6.1",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2"]

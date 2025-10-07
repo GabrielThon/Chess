@@ -1,8 +1,8 @@
 import pytest
 import json
 from pathlib import Path
-from src.models.position import Position
-from src.models import exceptions
+from src.chess.models.position import Position
+from src.chess.models import exceptions
 
 POSITIONS_PATH = Path(__file__).parent / "test_position_validity.json"
 positions = json.loads(POSITIONS_PATH.read_text())

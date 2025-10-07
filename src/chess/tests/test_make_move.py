@@ -1,7 +1,5 @@
-import pytest
-
-from src.models.move import Move
-from src.models.position import Position
+from src.chess.models.move import Move
+from src.chess.models.position import Position
 
 
 def test_simple_move():

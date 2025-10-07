@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.models.pieces import Pawn
+    pass
 
 
 class OutofBoundSquareError(Exception):

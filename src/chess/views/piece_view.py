@@ -1,4 +1,4 @@
-from src.models.pieces import Piece
+from src.chess.models.pieces import Piece
 import pygame
 from pathlib import Path
 

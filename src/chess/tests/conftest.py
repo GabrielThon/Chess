@@ -1,6 +1,6 @@
 import pytest
-from src.models.position import Position
-from src.models import utils
+from src.chess.models.position import Position
+from src.chess.models import utils
 
 
 @pytest.fixture

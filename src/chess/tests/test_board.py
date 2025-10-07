@@ -1,7 +1,8 @@
 import pytest
 
-from src.models.board import Square
-from src.models import utils
+from src.chess.models import Square
+from src.chess.models import utils
+
 
 def test_square_with_invalid_strings(emptyboard):
     invalid_string_squares = ["randomstring",
